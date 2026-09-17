@@ -1,6 +1,13 @@
 import { ITEM_META } from '../game/items'
 import { SCENES } from '../game/scenes'
 import { useGame } from '../state/GameState'
+import type { SceneId } from '../game/types'
+
+const BACK: Partial<Record<SceneId, SceneId>> = {
+  starRoad: 'kitchen',
+  moonField: 'starRoad',
+  moonCave: 'moonField',
+}
 
 export function Hud() {
   const { scene, items, reset, canCook, goTo } = useGame()
@@ -24,6 +31,11 @@ export function Hud() {
           </li>
         ))}
       </ul>
+      {BACK[scene] && (
+        <button type="button" className="ghost" onClick={() => goTo(BACK[scene]!)}>
+          もどる
+        </button>
+      )}
       {canCook && scene !== 'cooking' && (
         <button
           type="button"
