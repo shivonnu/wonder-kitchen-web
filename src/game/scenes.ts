@@ -9,10 +9,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'shion',
         label: 'しおん',
-        x: 30,
-        y: 52,
-        w: 14,
-        h: 30,
+        x: 32,
+        y: 54,
+        w: 8,
+        h: 18,
         actions: [
           {
             type: 'flag',
@@ -25,10 +25,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'luna',
         label: 'うさぎのルナ',
-        x: 44,
-        y: 50,
-        w: 16,
-        h: 24,
+        x: 46,
+        y: 52,
+        w: 10,
+        h: 18,
         hideWhen: ['lunaLeft'],
         actions: [
           {

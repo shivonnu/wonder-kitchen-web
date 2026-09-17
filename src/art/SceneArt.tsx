@@ -7,9 +7,9 @@ export function KitchenArt() {
   return (
     <div className="art">
       <Backdrop src={artUrl('kitchen.png')} />
-      <PixelSprite src={artUrl('shion-idle.png')} x={30} y={52} w={14} h={30} />
+      <PixelSprite src={artUrl('shion-idle.png')} x={32} y={54} w={8} h={18} />
       {!hasFlag('lunaLeft') && (
-        <PixelSprite src={artUrl('luna-idle.png')} x={44} y={50} w={16} h={24} />
+        <PixelSprite src={artUrl('luna-idle.png')} x={46} y={52} w={10} h={18} />
       )}
       {hasFlag('lunaLeft') && (
         <PixelStill src={artUrl('icon-memo.png')} x={48} y={56} w={8} h={14} />
