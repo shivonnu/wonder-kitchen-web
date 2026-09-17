@@ -2,23 +2,24 @@ import { useEffect, useState } from 'react'
 
 const cache = new Map<string, string>()
 
-function keyMagenta(src: string): Promise<string> {
-  const hit = cache.get(src)
+function processSprite(src: string, cropHalf: boolean): Promise<string> {
+  const key = `${src}|${cropHalf ? 'half' : 'full'}`
+  const hit = cache.get(key)
   if (hit) return Promise.resolve(hit)
   return new Promise((resolve) => {
     const img = new Image()
     img.decoding = 'async'
     img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
+      const srcCanvas = document.createElement('canvas')
+      srcCanvas.width = img.naturalWidth
+      srcCanvas.height = img.naturalHeight
+      const srcCtx = srcCanvas.getContext('2d')
+      if (!srcCtx) {
         resolve(src)
         return
       }
-      ctx.drawImage(img, 0, 0)
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      srcCtx.drawImage(img, 0, 0)
+      const data = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height)
       const px = data.data
       for (let i = 0; i < px.length; i += 4) {
         const r = px[i]
@@ -26,14 +27,32 @@ function keyMagenta(src: string): Promise<string> {
         const b = px[i + 2]
         if (r > 150 && b > 150 && g < 140 && r + b > g * 2 + 80) px[i + 3] = 0
       }
-      ctx.putImageData(data, 0, 0)
-      canvas.toBlob((blob) => {
+      srcCtx.putImageData(data, 0, 0)
+
+      const out = document.createElement('canvas')
+      const ctx = out.getContext('2d')
+      if (!ctx) {
+        resolve(src)
+        return
+      }
+      if (cropHalf) {
+        const w = Math.max(1, Math.floor(srcCanvas.width / 2))
+        out.width = w
+        out.height = srcCanvas.height
+        ctx.drawImage(srcCanvas, 0, 0, w, srcCanvas.height, 0, 0, w, srcCanvas.height)
+      } else {
+        out.width = srcCanvas.width
+        out.height = srcCanvas.height
+        ctx.drawImage(srcCanvas, 0, 0)
+      }
+
+      out.toBlob((blob) => {
         if (!blob) {
           resolve(src)
           return
         }
         const url = URL.createObjectURL(blob)
-        cache.set(src, url)
+        cache.set(key, url)
         resolve(url)
       })
     }
@@ -42,17 +61,16 @@ function keyMagenta(src: string): Promise<string> {
   })
 }
 
-export function useChroma(src: string) {
+export function useChroma(src: string, cropHalf = false) {
   const [url, setUrl] = useState<string | null>(null)
   useEffect(() => {
     let cancelled = false
-    setUrl(null)
-    void keyMagenta(src).then((next) => {
+    void processSprite(src, cropHalf).then((next) => {
       if (!cancelled) setUrl(next)
     })
     return () => {
       cancelled = true
     }
-  }, [src])
+  }, [src, cropHalf])
   return url
 }
