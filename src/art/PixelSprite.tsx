@@ -1,4 +1,4 @@
-import { artUrl } from '../game/assets'
+import { useChroma } from './chroma'
 
 type PixelSpriteProps = {
   src: string
@@ -19,6 +19,7 @@ export function PixelSprite({
   frames = 2,
   className,
 }: PixelSpriteProps) {
+  const keyed = useChroma(src)
   return (
     <div
       className={`pixel-sprite ${className ?? ''}`}
@@ -28,7 +29,7 @@ export function PixelSprite({
         width: `${w}%`,
         height: h ? `${h}%` : undefined,
         aspectRatio: h ? undefined : '1',
-        backgroundImage: `url(${src})`,
+        backgroundImage: `url(${keyed})`,
         backgroundSize: `${frames * 100}% 100%`,
       }}
       aria-hidden
@@ -44,10 +45,11 @@ export function PixelStill({
   h,
   className,
 }: Omit<PixelSpriteProps, 'frames'>) {
+  const keyed = useChroma(src)
   return (
     <img
       className={`sprite pixelated ${className ?? ''}`}
-      src={src}
+      src={keyed}
       alt=""
       draggable={false}
       style={{
@@ -62,4 +64,9 @@ export function PixelStill({
 
 export function Backdrop({ src }: { src: string }) {
   return <img className="art-bg pixelated" src={src} alt="" draggable={false} />
+}
+
+export function ChromaImg({ src, className }: { src: string; className?: string }) {
+  const keyed = useChroma(src)
+  return <img className={className} src={keyed} alt="" draggable={false} />
 }

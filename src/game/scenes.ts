@@ -336,10 +336,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'toCave',
         label: '月の洞窟へ',
-        x: 74,
-        y: 22,
-        w: 22,
-        h: 28,
+        x: 80,
+        y: 26,
+        w: 18,
+        h: 26,
         actions: [{ type: 'go', scene: 'moonCave' }],
       },
       {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { artUrl } from '../game/assets'
 import { COOK_STEPS } from '../game/recipe'
-import { PixelSprite } from '../art/PixelSprite'
+import { PixelSprite, ChromaImg } from '../art/PixelSprite'
 import { useGame } from '../state/GameState'
 
 const TOOLS = [
@@ -72,7 +72,7 @@ export function CookingView() {
               className={`tool ${!done && current.target === tool.id ? 'next' : ''}`}
               onClick={() => onTool(tool.id)}
             >
-              <img src={tool.icon} alt="" />
+              <ChromaImg src={tool.icon} />
               {tool.label}
             </button>
           ))}
