@@ -21,10 +21,16 @@
 
 ## GitHub Pages
 
+公開 URL: https://shivonnu.github.io/wonder-kitchen-web/
+
 `main` への push で GitHub Actions が `dist/` を GitHub Pages に載せます。
 
-初回だけリポジトリ設定が必要です。
+### 初回だけ必要な設定
 
-1. この PR を `main` にマージする
-2. GitHub の **Settings → Pages → Build and deployment → Source** を **GitHub Actions** にする
-3. Actions の **Deploy GitHub Pages** が成功すると、上の URL で公開される
+Actions だけでは Pages をオンにできないので、オーナーが一度だけ UI で有効化します。
+
+1. https://github.com/shivonnu/wonder-kitchen-web/settings/pages を開く
+2. **Build and deployment → Source** を **GitHub Actions** にする
+3. Actions の失敗した **Deploy GitHub Pages** を **Re-run all jobs** する
+
+デプロイログに `Failed to create deployment (status: 404)` と出る場合は、この設定がまだです。
