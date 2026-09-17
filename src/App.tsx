@@ -5,7 +5,7 @@ import { EndingView, TitleView } from './components/TitleView'
 import { GameProvider, useGame } from './state/GameState'
 
 function Screen() {
-  const { scene } = useGame()
+  const { scene, fading } = useGame()
   return (
     <div className="app-shell">
       <Hud />
@@ -15,6 +15,7 @@ function Screen() {
       {scene !== 'title' && scene !== 'cooking' && scene !== 'ending' && (
         <SceneView />
       )}
+      <div className={`scene-fade ${fading ? 'on' : ''}`} />
     </div>
   )
 }

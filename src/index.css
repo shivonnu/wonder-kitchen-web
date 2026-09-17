@@ -40,6 +40,7 @@ button {
   max-width: 960px;
   margin: 0 auto;
   padding: 12px;
+  position: relative;
 }
 
 .hud {
@@ -140,6 +141,122 @@ button.ghost,
   z-index: 0;
 }
 
+.pixelated,
+.art-bg,
+.sprite,
+.inv-icon,
+.tool img,
+.bowl-img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.pixel-sprite {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  animation: pixel-frames 0.7s steps(2) infinite;
+}
+
+@keyframes pixel-frames {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+
+.sprite {
+  position: absolute;
+  z-index: 2;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.bob {
+  animation: bob 1.2s steps(2) infinite;
+}
+
+.bob.delay {
+  animation-delay: 0.4s;
+}
+
+@keyframes bob {
+  0%,
+  49% {
+    transform: translateY(0);
+  }
+  50%,
+  100% {
+    transform: translateY(3px);
+  }
+}
+
+.shion-on-road {
+  animation:
+    pixel-frames 0.35s steps(2) infinite,
+    walk-road 2.4s linear infinite;
+}
+
+@keyframes walk-road {
+  0% {
+    left: 14%;
+    top: 72%;
+  }
+  50% {
+    left: 48%;
+    top: 42%;
+  }
+  100% {
+    left: 66%;
+    top: 22%;
+  }
+}
+
+.twinkle-stars {
+  opacity: 0;
+  animation: twinkle-layer 1.2s steps(2) infinite;
+  z-index: 1;
+}
+
+@keyframes twinkle-layer {
+  0%,
+  49% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 0.55;
+  }
+}
+
+.scene-fade {
+  position: absolute;
+  inset: 0;
+  background: #070b1c;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 30;
+  transition: opacity 0.28s steps(4);
+}
+
+.scene-fade.on {
+  opacity: 1;
+}
+
+.sparkle {
+  animation: sparkle 0.8s steps(2) infinite;
+}
+
+@keyframes sparkle {
+  50% {
+    filter: brightness(1.35);
+  }
+}
+
 .sprite {
   position: absolute;
   z-index: 2;
@@ -166,6 +283,11 @@ button.ghost,
 .hotspot:focus-visible {
   outline: 2px solid rgba(231, 197, 106, 0.7);
   background: rgba(231, 197, 106, 0.12);
+}
+
+.hotspot:active {
+  background: rgba(255, 255, 255, 0.35);
+  outline: 2px solid #fff;
 }
 
 .dialogue {
@@ -216,7 +338,7 @@ button.ghost,
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 16px;
   z-index: 2;
 }
@@ -260,6 +382,13 @@ button.ghost,
   background: var(--gold);
   color: var(--navy);
   font-weight: 700;
+  animation: tool-bounce 0.5s steps(2) infinite;
+}
+
+@keyframes tool-bounce {
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .title-screen {
