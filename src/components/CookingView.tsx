@@ -1,15 +1,16 @@
 import { useState } from 'react'
+import { artUrl } from '../game/assets'
 import { COOK_STEPS } from '../game/recipe'
 import { useGame } from '../state/GameState'
 
 const TOOLS = [
-  { id: 'potato', label: '星いも', icon: '/art/potato.png' },
-  { id: 'onion', label: '月たまねぎ', icon: '/art/onion.png' },
-  { id: 'knife', label: '包丁', icon: '/art/icon-knife.png' },
-  { id: 'pot', label: 'お鍋', icon: '/art/icon-pot.png' },
-  { id: 'milk', label: '月牛乳', icon: '/art/icon-milk.png' },
-  { id: 'fire', label: '火', icon: '/art/icon-fire.png' },
-  { id: 'salt', label: '星しお', icon: '/art/icon-salt.png' },
+  { id: 'potato', label: '星いも', icon: artUrl('potato.png') },
+  { id: 'onion', label: '月たまねぎ', icon: artUrl('onion.png') },
+  { id: 'knife', label: '包丁', icon: artUrl('icon-knife.png') },
+  { id: 'pot', label: 'お鍋', icon: artUrl('icon-pot.png') },
+  { id: 'milk', label: '月牛乳', icon: artUrl('icon-milk.png') },
+  { id: 'fire', label: '火', icon: artUrl('icon-fire.png') },
+  { id: 'salt', label: '星しお', icon: artUrl('icon-salt.png') },
 ] as const
 
 export function CookingView() {
@@ -19,7 +20,7 @@ export function CookingView() {
   const current = COOK_STEPS[step]
   const done = step >= COOK_STEPS.length
 
-  const bowlSrc = step >= 8 ? '/art/bowl-finished.png' : '/art/bowl-cooking.png'
+  const bowlSrc = step >= 8 ? artUrl('bowl-finished.png') : artUrl('bowl-cooking.png')
 
   function onTool(id: string) {
     if (done) return
@@ -42,7 +43,7 @@ export function CookingView() {
 
   return (
     <div className="scene cooking">
-      <img className="art-bg" src="/art/cooking.png" alt="" draggable={false} />
+      <img className="art-bg" src={artUrl('cooking.png')} alt="" draggable={false} />
       <div className="cook-stage">
         {step >= 5 && (
           <img className="bowl-img" src={bowlSrc} alt="" draggable={false} />

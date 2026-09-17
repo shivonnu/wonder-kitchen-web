@@ -1,10 +1,11 @@
+import { artUrl } from '../game/assets'
 import { useGame } from '../state/GameState'
 
 export function TitleView() {
   const { startNew, continueGame, hasSave } = useGame()
   return (
     <div className="title-screen">
-      <img className="art-bg" src="/art/title.png" alt="" draggable={false} />
+      <img className="art-bg" src={artUrl('title.png')} alt="" draggable={false} />
       <div className="title-copy">
         <h1>ほししおの台所</h1>
         <p className="tagline">夜の島で、月あかりポタージュをつくる。</p>
@@ -28,7 +29,7 @@ export function EndingView() {
   const { reset } = useGame()
   return (
     <div className="title-screen ending-screen">
-      <img className="art-bg" src="/art/ending.png" alt="" draggable={false} />
+      <img className="art-bg" src={artUrl('ending.png')} alt="" draggable={false} />
       <div className="title-copy">
         <h1>おしまい</h1>
         <p className="tagline">

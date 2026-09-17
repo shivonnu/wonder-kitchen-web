@@ -1,3 +1,4 @@
+import { artUrl } from '../game/assets'
 import { useGame } from '../state/GameState'
 
 type SpriteProps = {
@@ -34,17 +35,17 @@ export function KitchenArt() {
   const { hasFlag, canCook } = useGame()
   return (
     <div className="art">
-      <Backdrop src="/art/kitchen.png" />
-      <Sprite src="/art/shion.png" x={26} y={54} w={14} h={32} className="round-sprite" />
+      <Backdrop src={artUrl('kitchen.png')} />
+      <Sprite src={artUrl('shion.png')} x={26} y={54} w={14} h={32} className="round-sprite" />
       {!hasFlag('lunaLeft') && (
-        <Sprite src="/art/luna.png" x={42} y={48} w={16} h={24} className="round-sprite" />
+        <Sprite src={artUrl('luna.png')} x={42} y={48} w={16} h={24} className="round-sprite" />
       )}
       {hasFlag('lunaLeft') && (
-        <Sprite src="/art/icon-memo.png" x={46} y={56} w={10} h={16} className="round-sprite" />
+        <Sprite src={artUrl('icon-memo.png')} x={46} y={56} w={10} h={16} className="round-sprite" />
       )}
       {hasFlag('saltTaken') && (
         <Sprite
-          src="/art/salt-jar-empty.png"
+          src={artUrl('salt-jar-empty.png')}
           x={82}
           y={32}
           w={12}
@@ -60,7 +61,7 @@ export function KitchenArt() {
 export function StarRoadArt() {
   return (
     <div className="art">
-      <Backdrop src="/art/star-road.png" />
+      <Backdrop src={artUrl('star-road.png')} />
     </div>
   )
 }
@@ -69,12 +70,12 @@ export function MoonFieldArt() {
   const { hasItem } = useGame()
   return (
     <div className="art">
-      <Backdrop src="/art/moon-field.png" />
+      <Backdrop src={artUrl('moon-field.png')} />
       {!hasItem('potato') && (
-        <Sprite src="/art/potato.png" x={8} y={46} w={18} h={24} className="round-sprite" />
+        <Sprite src={artUrl('potato.png')} x={8} y={46} w={18} h={24} className="round-sprite" />
       )}
       {!hasItem('onion') && (
-        <Sprite src="/art/onion.png" x={52} y={48} w={16} h={22} className="round-sprite" />
+        <Sprite src={artUrl('onion.png')} x={52} y={48} w={16} h={22} className="round-sprite" />
       )}
     </div>
   )
@@ -84,9 +85,9 @@ export function MoonCaveArt() {
   const { hasItem } = useGame()
   return (
     <div className="art">
-      <Backdrop src="/art/moon-cave.png" />
+      <Backdrop src={artUrl('moon-cave.png')} />
       {!hasItem('moonMilk') && (
-        <Sprite src="/art/moon-well.png" x={36} y={48} w={26} h={32} className="round-sprite" />
+        <Sprite src={artUrl('moon-well.png')} x={36} y={48} w={26} h={32} className="round-sprite" />
       )}
     </div>
   )

@@ -5,7 +5,11 @@
 
 マヨネーズや既存キャラクターは出てきません。特製調味料は星しおです。
 
-## 遊び方
+## 遊ぶ
+
+公開 URL: https://shivonnu.github.io/wonder-kitchen-web/
+
+ローカルでは:
 
 1. `npm install`
 2. `npm run dev`
@@ -14,3 +18,13 @@
 5. 「料理をはじめる」で手順どおりにクリック
 
 進行はブラウザの `localStorage` に保存されます。
+
+## GitHub Pages
+
+`main` への push で GitHub Actions が `dist/` を GitHub Pages に載せます。
+
+初回だけリポジトリ設定が必要です。
+
+1. この PR を `main` にマージする
+2. GitHub の **Settings → Pages → Build and deployment → Source** を **GitHub Actions** にする
+3. Actions の **Deploy GitHub Pages** が成功すると、上の URL で公開される
