@@ -24,7 +24,7 @@ function keyMagenta(src: string): Promise<string> {
         const r = px[i]
         const g = px[i + 1]
         const b = px[i + 2]
-        if (r > 170 && b > 170 && g < 90) px[i + 3] = 0
+        if (r > 150 && b > 150 && g < 140 && r + b > g * 2 + 80) px[i + 3] = 0
       }
       ctx.putImageData(data, 0, 0)
       canvas.toBlob((blob) => {
@@ -43,9 +43,10 @@ function keyMagenta(src: string): Promise<string> {
 }
 
 export function useChroma(src: string) {
-  const [url, setUrl] = useState(src)
+  const [url, setUrl] = useState<string | null>(null)
   useEffect(() => {
     let cancelled = false
+    setUrl(null)
     void keyMagenta(src).then((next) => {
       if (!cancelled) setUrl(next)
     })

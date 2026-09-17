@@ -20,6 +20,7 @@ export function PixelSprite({
   className,
 }: PixelSpriteProps) {
   const keyed = useChroma(src)
+  if (!keyed) return null
   return (
     <div
       className={`pixel-sprite ${className ?? ''}`}
@@ -46,6 +47,7 @@ export function PixelStill({
   className,
 }: Omit<PixelSpriteProps, 'frames'>) {
   const keyed = useChroma(src)
+  if (!keyed) return null
   return (
     <img
       className={`sprite pixelated ${className ?? ''}`}
@@ -68,5 +70,6 @@ export function Backdrop({ src }: { src: string }) {
 
 export function ChromaImg({ src, className }: { src: string; className?: string }) {
   const keyed = useChroma(src)
+  if (!keyed) return null
   return <img className={className} src={keyed} alt="" draggable={false} />
 }
