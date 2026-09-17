@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { artUrl } from '../game/assets'
 import { COOK_STEPS } from '../game/recipe'
+import { PixelSprite, ChromaImg } from '../art/PixelSprite'
 import { useGame } from '../state/GameState'
 
 const TOOLS = [
@@ -20,7 +21,7 @@ export function CookingView() {
   const current = COOK_STEPS[step]
   const done = step >= COOK_STEPS.length
 
-  const bowlSrc = step >= 8 ? artUrl('bowl-finished.png') : artUrl('bowl-cooking.png')
+  const bubbling = step >= 5 && !done
 
   function onTool(id: string) {
     if (done) return
@@ -43,10 +44,25 @@ export function CookingView() {
 
   return (
     <div className="scene cooking">
-      <img className="art-bg" src={artUrl('cooking.png')} alt="" draggable={false} />
+      <img className="art-bg pixelated" src={artUrl('cooking.png')} alt="" draggable={false} />
       <div className="cook-stage">
-        {step >= 5 && (
-          <img className="bowl-img" src={bowlSrc} alt="" draggable={false} />
+        {bubbling && (
+          <PixelSprite
+            src={artUrl('bowl-cook-sheet.png')}
+            x={38}
+            y={18}
+            w={24}
+            h={32}
+            className="cook-bowl"
+          />
+        )}
+        {done && (
+          <img
+            className="bowl-img pixelated sparkle"
+            src={artUrl('bowl-finished.png')}
+            alt=""
+            draggable={false}
+          />
         )}
         <div className="cook-tools">
           {TOOLS.map((tool) => (
@@ -56,7 +72,7 @@ export function CookingView() {
               className={`tool ${!done && current.target === tool.id ? 'next' : ''}`}
               onClick={() => onTool(tool.id)}
             >
-              <img src={tool.icon} alt="" />
+              <ChromaImg src={tool.icon} />
               {tool.label}
             </button>
           ))}

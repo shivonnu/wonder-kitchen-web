@@ -1,5 +1,6 @@
 import { ITEM_META } from '../game/items'
 import { SCENES } from '../game/scenes'
+import { ChromaImg } from '../art/PixelSprite'
 import { useGame } from '../state/GameState'
 import type { SceneId } from '../game/types'
 
@@ -26,7 +27,7 @@ export function Hud() {
         {items.length === 0 && <li className="empty">もちものなし</li>}
         {items.map((id) => (
           <li key={id} title={ITEM_META[id].name}>
-            <img className="inv-icon" src={ITEM_META[id].icon} alt="" />
+            <ChromaImg className="inv-icon" src={ITEM_META[id].icon} />
             {ITEM_META[id].name}
           </li>
         ))}

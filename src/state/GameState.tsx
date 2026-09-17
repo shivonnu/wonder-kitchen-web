@@ -42,6 +42,7 @@ type GameContextValue = {
   items: ItemId[]
   flags: FlagId[]
   dialogue: { speaker: string; text: string }
+  fading: boolean
   hasItem: (id: ItemId) => boolean
   hasFlag: (id: FlagId) => boolean
   canCook: boolean
@@ -62,6 +63,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [flags, setFlags] = useState<FlagId[]>([])
   const [dialogue, setDialogue] = useState(START_DIALOGUE)
   const [hasSave, setHasSave] = useState(Boolean(existing))
+  const [fading, setFading] = useState(false)
+
+  const changeScene = useCallback((next: SceneId) => {
+    if (next === scene) return
+    setFading(true)
+    window.setTimeout(() => {
+      setScene(next)
+      setFading(false)
+    }, 280)
+  }, [scene])
 
   const snapshot = useCallback(
     (next: Partial<SaveData> & { scene: SceneId }) => {
@@ -112,7 +123,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setItems(nextItems)
       setFlags(nextFlags)
       setDialogue(nextDialogue)
-      if (nextScene) setScene(nextScene)
+      if (nextScene) changeScene(nextScene)
       snapshot({
         scene: nextScene ?? scene,
         items: nextItems,
@@ -120,7 +131,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         dialogue: nextDialogue,
       })
     },
-    [dialogue, scene, snapshot],
+    [changeScene, dialogue, scene, snapshot],
   )
 
   const clickHotspot = useCallback(
@@ -158,11 +169,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const goTo = useCallback(
     (next: SceneId, nextDialogue?: { speaker: string; text: string }) => {
-      setScene(next)
       if (nextDialogue) setDialogue(nextDialogue)
+      changeScene(next)
       snapshot({ scene: next, dialogue: nextDialogue ?? dialogue })
     },
-    [dialogue, snapshot],
+    [changeScene, dialogue, snapshot],
   )
 
   const startNew = useCallback(() => {
@@ -205,6 +216,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       items,
       flags,
       dialogue,
+      fading,
       hasItem,
       hasFlag,
       canCook,
@@ -220,6 +232,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       items,
       flags,
       dialogue,
+      fading,
       hasItem,
       hasFlag,
       canCook,
