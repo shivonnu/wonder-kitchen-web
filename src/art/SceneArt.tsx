@@ -42,14 +42,16 @@ export function KitchenArt() {
       {hasFlag('lunaLeft') && (
         <Sprite src="/art/icon-memo.png" x={46} y={56} w={10} h={16} className="round-sprite" />
       )}
-      <Sprite
-        src={hasFlag('saltTaken') ? '/art/salt-jar-empty.png' : '/art/salt-jar.png'}
-        x={78}
-        y={30}
-        w={12}
-        h={22}
-        className="round-sprite"
-      />
+      {hasFlag('saltTaken') && (
+        <Sprite
+          src="/art/salt-jar-empty.png"
+          x={82}
+          y={32}
+          w={12}
+          h={22}
+          className="round-sprite"
+        />
+      )}
       {canCook && <div className="cook-glow">つくれる！</div>}
     </div>
   )

@@ -60,10 +60,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'window',
         label: '丸い窓',
-        x: 52,
+        x: 56,
         y: 2,
-        w: 32,
-        h: 40,
+        w: 26,
+        h: 36,
         actions: [
           {
             type: 'flag',
@@ -77,10 +77,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'saltJar',
         label: '星しおの壺',
-        x: 78,
-        y: 30,
+        x: 82,
+        y: 32,
         w: 12,
-        h: 22,
+        h: 20,
         hideWhen: ['saltTaken'],
         actions: [
           {
@@ -95,10 +95,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'emptySalt',
         label: '空の壺',
-        x: 78,
-        y: 30,
+        x: 82,
+        y: 32,
         w: 12,
-        h: 22,
+        h: 20,
         showWhen: ['saltTaken'],
         actions: [
           {
@@ -186,10 +186,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'floorCrystal',
         label: '床の結晶',
-        x: 78,
-        y: 72,
-        w: 16,
-        h: 16,
+        x: 88,
+        y: 68,
+        w: 10,
+        h: 18,
         actions: [
           {
             type: 'say',
@@ -234,10 +234,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'footprints',
         label: 'ルナの足跡',
-        x: 16,
-        y: 62,
-        w: 30,
-        h: 20,
+        x: 12,
+        y: 68,
+        w: 34,
+        h: 16,
         actions: [
           {
             type: 'say',
@@ -336,10 +336,10 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
       {
         id: 'toCave',
         label: '月の洞窟へ',
-        x: 70,
-        y: 22,
-        w: 26,
-        h: 36,
+        x: 78,
+        y: 26,
+        w: 20,
+        h: 34,
         actions: [{ type: 'go', scene: 'moonCave' }],
       },
       {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { COOK_STEPS } from '../game/recipe'
 import { useGame } from '../state/GameState'
 
@@ -19,11 +19,7 @@ export function CookingView() {
   const current = COOK_STEPS[step]
   const done = step >= COOK_STEPS.length
 
-  const bowlSrc = useMemo(() => {
-    if (step >= 8) return '/art/bowl-finished.png'
-    if (step >= 5) return '/art/bowl-cooking.png'
-    return '/art/bowl-empty.png'
-  }, [step])
+  const bowlSrc = step >= 8 ? '/art/bowl-finished.png' : '/art/bowl-cooking.png'
 
   function onTool(id: string) {
     if (done) return
@@ -48,7 +44,9 @@ export function CookingView() {
     <div className="scene cooking">
       <img className="art-bg" src="/art/cooking.png" alt="" draggable={false} />
       <div className="cook-stage">
-        <img className="bowl-img" src={bowlSrc} alt="" draggable={false} />
+        {step >= 5 && (
+          <img className="bowl-img" src={bowlSrc} alt="" draggable={false} />
+        )}
         <div className="cook-tools">
           {TOOLS.map((tool) => (
             <button
