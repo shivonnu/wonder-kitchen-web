@@ -1,0 +1,316 @@
+:root {
+  --navy: #0b1026;
+  --indigo: #1b2450;
+  --gold: #e7c56a;
+  --cream: #f4efe4;
+  --salt: #d9e7ff;
+  --pink: #c9a6d4;
+  --wood: #3a2a48;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  background: radial-gradient(ellipse at top, #24306a, var(--navy) 55%);
+  color: var(--cream);
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ctext y='20' font-size='20'%3E✦%3C/text%3E%3C/svg%3E")
+      8 8,
+    auto;
+}
+
+button {
+  font-family: inherit;
+  cursor: inherit;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px;
+}
+
+.hud {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(12, 16, 40, 0.72);
+  border: 1px solid rgba(231, 197, 106, 0.35);
+  border-radius: 16px;
+  margin-bottom: 10px;
+}
+
+.hud .place {
+  font-weight: 700;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.inventory {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.inventory li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(217, 231, 255, 0.12);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.inv-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.inventory .empty {
+  opacity: 0.55;
+}
+
+.primary-mini {
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+button.ghost,
+.title-actions button {
+  background: transparent;
+  color: var(--cream);
+  border: 1px solid rgba(244, 239, 228, 0.4);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+
+.title-actions .primary {
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  font-weight: 700;
+}
+
+.scene {
+  position: relative;
+  flex: 1;
+  min-height: 520px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(231, 197, 106, 0.25);
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+}
+
+.art-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.sprite {
+  position: absolute;
+  z-index: 2;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.round-sprite {
+  border-radius: 50%;
+  mask-image: radial-gradient(circle, #000 62%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle, #000 62%, transparent 72%);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+}
+
+.hotspot {
+  position: absolute;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  z-index: 5;
+}
+
+.hotspot:hover,
+.hotspot:focus-visible {
+  outline: 2px solid rgba(231, 197, 106, 0.7);
+  background: rgba(231, 197, 106, 0.12);
+}
+
+.dialogue {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
+  background: rgba(11, 16, 38, 0.88);
+  border: 1px solid rgba(217, 231, 255, 0.25);
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+
+.dialogue .speaker {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dialogue p {
+  margin: 4px 0 0;
+  line-height: 1.6;
+}
+
+.cook-glow {
+  position: absolute;
+  left: 38%;
+  bottom: 22%;
+  z-index: 3;
+  background: var(--gold);
+  color: var(--navy);
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.cooking .cook-stage {
+  position: absolute;
+  inset: 0 0 28% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 2;
+}
+
+.bowl-img {
+  width: min(220px, 42%);
+  height: auto;
+  border-radius: 50%;
+  mask-image: radial-gradient(circle, #000 70%, transparent 78%);
+  -webkit-mask-image: radial-gradient(circle, #000 70%, transparent 78%);
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
+}
+
+.cook-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.tool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(11, 16, 38, 0.72);
+  color: var(--cream);
+  border: 1px solid rgba(244, 239, 228, 0.3);
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.tool img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.tool.next {
+  background: var(--gold);
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.title-screen {
+  position: relative;
+  flex: 1;
+  min-height: 520px;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.title-copy {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 28px 24px 32px;
+  text-align: center;
+  background: linear-gradient(transparent, rgba(11, 16, 38, 0.88) 28%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-screen h1 {
+  font-size: clamp(32px, 8vw, 56px);
+  margin: 0;
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(231, 197, 106, 0.45);
+}
+
+.tagline,
+.credit {
+  opacity: 0.9;
+  max-width: 36em;
+  margin: 0;
+}
+
+.title-actions {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .scene,
+  .title-screen {
+    min-height: 68dvh;
+  }
+  .hud {
+    flex-wrap: wrap;
+  }
+}
