@@ -26,7 +26,7 @@ export function Hud() {
         {items.length === 0 && <li className="empty">もちものなし</li>}
         {items.map((id) => (
           <li key={id} title={ITEM_META[id].name}>
-            <span>{ITEM_META[id].glyph}</span>
+            <img className="inv-icon" src={ITEM_META[id].icon} alt="" />
             {ITEM_META[id].name}
           </li>
         ))}

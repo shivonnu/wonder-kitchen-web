@@ -1,11 +1,11 @@
 import type { ItemId } from './types'
 
-export const ITEM_META: Record<ItemId, { name: string; glyph: string }> = {
-  memo: { name: 'ルナのメモ', glyph: '☽' },
-  potato: { name: '星いも', glyph: '★' },
-  onion: { name: '月たまねぎ', glyph: '🌙' },
-  moonMilk: { name: '月牛乳', glyph: '🥛' },
-  starSalt: { name: '星しお', glyph: '✦' },
+export const ITEM_META: Record<ItemId, { name: string; icon: string }> = {
+  memo: { name: 'ルナのメモ', icon: '/art/icon-memo.png' },
+  potato: { name: '星いも', icon: '/art/potato.png' },
+  onion: { name: '月たまねぎ', icon: '/art/onion.png' },
+  moonMilk: { name: '月牛乳', icon: '/art/icon-milk.png' },
+  starSalt: { name: '星しお', icon: '/art/icon-salt.png' },
 }
 
 export const RECIPE_ITEMS: ItemId[] = [

@@ -3,13 +3,13 @@ import { COOK_STEPS } from '../game/recipe'
 import { useGame } from '../state/GameState'
 
 const TOOLS = [
-  { id: 'potato', label: '星いも' },
-  { id: 'onion', label: '月たまねぎ' },
-  { id: 'knife', label: '包丁' },
-  { id: 'pot', label: 'お鍋' },
-  { id: 'milk', label: '月牛乳' },
-  { id: 'fire', label: '火' },
-  { id: 'salt', label: '星しお' },
+  { id: 'potato', label: '星いも', icon: '/art/potato.png' },
+  { id: 'onion', label: '月たまねぎ', icon: '/art/onion.png' },
+  { id: 'knife', label: '包丁', icon: '/art/icon-knife.png' },
+  { id: 'pot', label: 'お鍋', icon: '/art/icon-pot.png' },
+  { id: 'milk', label: '月牛乳', icon: '/art/icon-milk.png' },
+  { id: 'fire', label: '火', icon: '/art/icon-fire.png' },
+  { id: 'salt', label: '星しお', icon: '/art/icon-salt.png' },
 ] as const
 
 export function CookingView() {
@@ -19,12 +19,10 @@ export function CookingView() {
   const current = COOK_STEPS[step]
   const done = step >= COOK_STEPS.length
 
-  const bowlClass = useMemo(() => {
-    if (step >= 8) return 'bowl finished'
-    if (step >= 7) return 'bowl boiling'
-    if (step >= 6) return 'bowl milky'
-    if (step >= 5) return 'bowl veg'
-    return 'bowl empty'
+  const bowlSrc = useMemo(() => {
+    if (step >= 8) return '/art/bowl-finished.png'
+    if (step >= 5) return '/art/bowl-cooking.png'
+    return '/art/bowl-empty.png'
   }, [step])
 
   function onTool(id: string) {
@@ -48,8 +46,9 @@ export function CookingView() {
 
   return (
     <div className="scene cooking">
+      <img className="art-bg" src="/art/cooking.png" alt="" draggable={false} />
       <div className="cook-stage">
-        <div className={bowlClass} />
+        <img className="bowl-img" src={bowlSrc} alt="" draggable={false} />
         <div className="cook-tools">
           {TOOLS.map((tool) => (
             <button
@@ -58,6 +57,7 @@ export function CookingView() {
               className={`tool ${!done && current.target === tool.id ? 'next' : ''}`}
               onClick={() => onTool(tool.id)}
             >
+              <img src={tool.icon} alt="" />
               {tool.label}
             </button>
           ))}
