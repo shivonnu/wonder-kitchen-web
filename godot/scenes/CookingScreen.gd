@@ -47,9 +47,9 @@ func _ready() -> void:
 	Art.hotspot(self, "お鍋", 18, 28, 18, 26, _on_pot)
 	Art.hotspot(self, "火", 20, 52, 14, 16, _on_fire)
 	Art.hotspot(self, "まな板", 40, 58, 36, 28, _on_board)
-	Art.hotspot(self, "包丁", 76, 62, 12, 16, _on_knife)
+	Art.hotspot(self, "包丁", 74, 58, 16, 20, _on_knife)
 
-	var knife := Art.sprite(_overlays, "res://assets/art/icon-knife.png", 78, 64, 8, 12, false, false)
+	var knife := Art.sprite(_overlays, "res://assets/art/icon-knife.png", 76, 58, 12, 18, false, false)
 	knife.name = "KnifeIcon"
 
 	GameState.hand_changed.connect(_refresh_visuals)

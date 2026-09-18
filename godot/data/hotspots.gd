@@ -24,6 +24,7 @@ const BACK := {
 	"starRoad": "kitchen",
 	"moonField": "starRoad",
 	"moonCave": "moonField",
+	"cooking": "kitchen",
 }
 
 const ART := {

@@ -105,7 +105,7 @@ func _item_chip(id: String) -> Button:
 	var b := Button.new()
 	b.text = str(meta["name"])
 	b.tooltip_text = str(meta["name"])
-	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(0, 32)
 	if GameState.scene == "cooking" and GameState.hand == id:
 		b.add_theme_stylebox_override("normal", Art.primary_style())
 		b.add_theme_color_override("font_color", Art.NAVY)
