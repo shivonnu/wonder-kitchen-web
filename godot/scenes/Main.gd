@@ -1,0 +1,145 @@
+extends Control
+
+@onready var hud: PanelContainer = $Root/Hud
+@onready var place_label: Label = $Root/Hud/HudRow/Place
+@onready var inventory: HBoxContainer = $Root/Hud/HudRow/Inventory
+@onready var back_btn: Button = $Root/Hud/HudRow/Back
+@onready var cook_btn: Button = $Root/Hud/HudRow/Cook
+@onready var quit_btn: Button = $Root/Hud/HudRow/Quit
+@onready var host: Control = $Root/Stage
+@onready var dialogue: PanelContainer = $Root/Dialogue
+@onready var speaker: Label = $Root/Dialogue/DialogueCol/Speaker
+@onready var body: Label = $Root/Dialogue/DialogueCol/Body
+@onready var fade: ColorRect = $Fade
+@onready var hand_label: Label = $Root/Hud/HudRow/Hand
+
+func _ready() -> void:
+	Art.boot()
+	_apply_theme()
+	GameState.scene_changed.connect(_on_scene)
+	GameState.inventory_changed.connect(_refresh_hud)
+	GameState.flags_changed.connect(_refresh_hud)
+	GameState.dialogue_changed.connect(_refresh_dialogue)
+	GameState.fading_changed.connect(_on_fade)
+	GameState.hand_changed.connect(_refresh_hud)
+	back_btn.pressed.connect(_on_back)
+	cook_btn.pressed.connect(_on_cook)
+	quit_btn.pressed.connect(func() -> void: GameState.reset())
+	_show_scene(GameState.scene)
+	_refresh_hud()
+	_refresh_dialogue()
+
+
+func _apply_theme() -> void:
+	var theme := Theme.new()
+	theme.default_font = Art.font
+	theme.default_font_size = 15
+	theme.set_color("font_color", "Label", Art.CREAM)
+	theme.set_color("font_color", "Button", Art.CREAM)
+	theme.set_color("font_hover_color", "Button", Art.GOLD)
+	theme.set_stylebox("normal", "Button", Art.ghost_style())
+	theme.set_stylebox("hover", "Button", Art.ghost_style())
+	theme.set_stylebox("pressed", "Button", Art.ghost_style())
+	theme.set_stylebox("panel", "PanelContainer", Art.panel_style())
+	self.theme = theme
+	cook_btn.add_theme_stylebox_override("normal", Art.primary_style())
+	cook_btn.add_theme_stylebox_override("hover", Art.primary_style())
+	cook_btn.add_theme_color_override("font_color", Art.NAVY)
+	place_label.add_theme_color_override("font_color", Art.GOLD)
+	place_label.add_theme_font_size_override("font_size", 16)
+	speaker.add_theme_color_override("font_color", Art.GOLD)
+
+
+func _on_scene(_scene: String) -> void:
+	_show_scene(GameState.scene)
+	_refresh_hud()
+	_refresh_dialogue()
+
+
+func _show_scene(scene_id: String) -> void:
+	for c in host.get_children():
+		c.queue_free()
+	var screen: Control
+	match scene_id:
+		"title":
+			screen = TitleScreen.new()
+		"ending":
+			screen = EndingScreen.new()
+		"cooking":
+			screen = CookingScreen.new()
+		_:
+			screen = AdventureScreen.new()
+	screen.layout_mode = 1
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.anchor_left = 0
+	screen.anchor_top = 0
+	screen.anchor_right = 1
+	screen.anchor_bottom = 1
+	host.add_child(screen)
+	var show_hud := scene_id != "title" and scene_id != "ending"
+	hud.visible = show_hud
+	dialogue.visible = show_hud
+
+
+func _refresh_hud() -> void:
+	var scene_id := GameState.scene
+	place_label.text = str(Hotspots.TITLES.get(scene_id, ""))
+	hand_label.visible = scene_id == "cooking"
+	hand_label.text = "手: %s" % Hotspots.HAND_NAMES.get(GameState.hand, GameState.hand)
+	back_btn.visible = Hotspots.BACK.has(scene_id)
+	cook_btn.visible = GameState.can_cook() and scene_id != "cooking" and scene_id != "title" and scene_id != "ending"
+	for c in inventory.get_children():
+		c.queue_free()
+	if GameState.items.is_empty():
+		var empty := Label.new()
+		empty.text = "もちものなし"
+		empty.modulate = Color(1, 1, 1, 0.55)
+		inventory.add_child(empty)
+	else:
+		for id in GameState.items:
+			inventory.add_child(_item_chip(id))
+
+
+func _item_chip(id: String) -> Button:
+	var meta: Dictionary = Hotspots.ITEM_META.get(id, {"name": id, "icon": ""})
+	var b := Button.new()
+	b.text = str(meta["name"])
+	b.tooltip_text = str(meta["name"])
+	b.custom_minimum_size = Vector2(0, 32)
+	if GameState.scene == "cooking" and GameState.hand == id:
+		b.add_theme_stylebox_override("normal", Art.primary_style())
+		b.add_theme_color_override("font_color", Art.NAVY)
+	if GameState.scene == "cooking":
+		b.pressed.connect(func() -> void: _pick_item(id))
+	else:
+		b.disabled = true
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return b
+
+
+func _pick_item(id: String) -> void:
+	if id == "memo":
+		GameState.say("メモ", "月あかりポタージュ：星いも、月たまねぎ、月牛乳、仕上げに星しお。")
+		return
+	GameState.set_hand(id)
+	GameState.say("しおん", "%sを手に持った。" % Hotspots.HAND_NAMES.get(id, id))
+
+
+func _refresh_dialogue() -> void:
+	speaker.text = str(GameState.dialogue.get("speaker", ""))
+	body.text = str(GameState.dialogue.get("text", ""))
+
+
+func _on_back() -> void:
+	var next: String = Hotspots.BACK.get(GameState.scene, "")
+	if next != "":
+		GameState.go_to(next)
+
+
+func _on_cook() -> void:
+	GameState.go_to("cooking", "しおん", "そろったね。つくってみよう。")
+
+
+func _on_fade(on: bool) -> void:
+	var tw := create_tween()
+	tw.tween_property(fade, "modulate:a", 1.0 if on else 0.0, 0.26)

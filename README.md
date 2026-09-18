@@ -19,6 +19,14 @@
 
 進行はブラウザの `localStorage` に保存されます。
 
+## Godot 版（移植中）
+
+同じ物語を Godot 4.7 に移植した試作が [`godot/`](godot/) にあります。料理はボタン順ではなく、手に持って蛇口・まな板・包丁・鍋へ使います。公開サイトはまだ React 版です。
+
+```
+godot --path godot
+```
+
 ## GitHub Pages
 
 公開 URL: https://shivonnu.github.io/wonder-kitchen-web/
