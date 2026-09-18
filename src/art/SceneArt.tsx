@@ -61,6 +61,7 @@ export function MoonCaveArt() {
       {!hasItem('moonMilk') && (
         <PixelStill src={artUrl('moon-well.png')} x={36} y={46} w={26} h={32} className="bob" />
       )}
+      {hasItem('moonMilk') && <div className="cook-glow">画面をタップ、または『もどる』で畑へ</div>}
     </div>
   )
 }

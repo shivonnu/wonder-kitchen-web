@@ -100,3 +100,12 @@ fi
 
 echo "Web export ready: $OUT"
 ls -lh "$OUT"
+
+if [[ -d "$ROOT/public/art" ]]; then
+  echo "Copying static art for leftover React sessions…"
+  mkdir -p "$OUT/art"
+  cp -a "$ROOT/public/art/." "$OUT/art/"
+  cp "$ROOT/godot/assets/art/icon-milk.png" "$OUT/art/icon-milk.png"
+  cp "$ROOT/godot/assets/art/moon-cave.png" "$OUT/art/moon-cave.png"
+  cp "$ROOT/godot/assets/art/moon-well.png" "$OUT/art/moon-well.png"
+fi

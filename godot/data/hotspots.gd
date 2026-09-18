@@ -223,6 +223,7 @@ const SCENES := {
 				"id": "potato",
 				"label": "星いも",
 				"x": 10, "y": 42, "w": 16, "h": 22,
+				"hideWhenItem": ["potato"],
 				"actions": [
 					{"type": "give", "item": "potato", "speaker": "星いも", "text": "土のなかで光っていたいも。ほくほくの星のかたち。"},
 				],
@@ -231,6 +232,7 @@ const SCENES := {
 				"id": "onion",
 				"label": "月たまねぎ",
 				"x": 32, "y": 40, "w": 14, "h": 20,
+				"hideWhenItem": ["onion"],
 				"actions": [
 					{"type": "give", "item": "onion", "speaker": "月たまねぎ", "text": "層が三日月みたいに重なっている。切ると、塩の涙が出るらしい。"},
 				],
@@ -269,8 +271,18 @@ const SCENES := {
 				"id": "well",
 				"label": "月の井戸",
 				"x": 36, "y": 46, "w": 26, "h": 32,
+				"hideWhenItem": ["moonMilk"],
 				"actions": [
 					{"type": "give", "item": "moonMilk", "speaker": "月の井戸", "text": "静かな白い液体。飲むと、夢のなかで潮の音がする。"},
+				],
+			},
+			{
+				"id": "leaveAfterMilk",
+				"label": "畑へもどる",
+				"x": 16, "y": 28, "w": 68, "h": 52,
+				"showWhenItem": ["moonMilk"],
+				"actions": [
+					{"type": "go", "scene": "moonField", "speaker": "しおん", "text": "月牛乳はカバンへ。星しおはキッチンの壺だよ。もどってそろえよう。"},
 				],
 			},
 			{
@@ -311,6 +323,35 @@ static func visible(scene_id: String) -> Array:
 			for f in spot["hideWhen"]:
 				if GameState.has_flag(str(f)):
 					ok = false
+		if spot.has("showWhenItem"):
+			for id in spot["showWhenItem"]:
+				if not GameState.has_item(str(id)):
+					ok = false
+		if spot.has("hideWhenItem"):
+			for id in spot["hideWhenItem"]:
+				if GameState.has_item(str(id)):
+					ok = false
+		if ok and _give_already_taken(spot):
+			ok = false
 		if ok:
 			out.append(spot)
 	return out
+
+
+static func _give_already_taken(spot: Dictionary) -> bool:
+	var actions: Array = spot.get("actions", [])
+	if actions.is_empty():
+		return false
+	var any_give := false
+	for a in actions:
+		var t := str(a.get("type", ""))
+		if t == "go" or t == "say":
+			return false
+		if t == "give":
+			any_give = true
+			if not GameState.has_item(str(a.get("item", ""))):
+				return false
+		if t == "flag":
+			if not GameState.has_flag(str(a.get("flag", ""))):
+				return false
+	return any_give

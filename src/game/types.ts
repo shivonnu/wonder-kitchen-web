@@ -31,6 +31,8 @@ export type Hotspot = {
   h: number
   hideWhen?: FlagId[]
   showWhen?: FlagId[]
+  hideWhenItem?: ItemId[]
+  showWhenItem?: ItemId[]
   requireItems?: ItemId[]
   missingText?: string
   actions: HotspotAction[]

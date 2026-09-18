@@ -15,10 +15,10 @@ const ART: Record<
 }
 
 export function SceneView() {
-  const { scene, flags, clickHotspot, dialogue } = useGame()
+  const { scene, flags, items, clickHotspot, dialogue } = useGame()
   if (scene === 'title' || scene === 'cooking' || scene === 'ending') return null
   const Art = ART[scene]
-  const spots = visibleHotspots(scene, flags)
+  const spots = visibleHotspots(scene, flags, items)
 
   return (
     <div className="scene">
