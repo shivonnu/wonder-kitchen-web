@@ -35,7 +35,7 @@ grow_vertical = 2
 theme_override_constants/separation = 10
 
 [node name="Hud" type="PanelContainer" parent="Root"]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 
 [node name="HudRow" type="HBoxContainer" parent="Root/Hud"]
@@ -58,12 +58,16 @@ text = "手: 素手"
 
 [node name="Back" type="Button" parent="Root/Hud/HudRow"]
 visible = false
+custom_minimum_size = Vector2(88, 40)
 layout_mode = 2
+size_flags_horizontal = 0
 text = "もどる"
 
 [node name="Cook" type="Button" parent="Root/Hud/HudRow"]
 visible = false
+custom_minimum_size = Vector2(148, 40)
 layout_mode = 2
+size_flags_horizontal = 0
 text = "料理をはじめる"
 
 [node name="Quit" type="Button" parent="Root/Hud/HudRow"]

@@ -160,12 +160,17 @@ func click_hotspot(spot: Dictionary) -> void:
 				all_have = false
 				break
 		if all_have and not has_go:
+			if scene == "moonCave":
+				say("しおん", "月牛乳はもう持ってるよ。畑へもどろう。")
+				call_deferred("go_to", "moonField")
+				return
 			say("しおん", "それは、もう持っているよ。")
 			return
 
 	var next_scene := ""
 	var speaker := str(dialogue.get("speaker", "しおん"))
 	var text := str(dialogue.get("text", ""))
+	var picked := false
 	for a in actions:
 		match str(a.get("type", "")):
 			"say":
@@ -175,6 +180,7 @@ func click_hotspot(spot: Dictionary) -> void:
 				var item := str(a.get("item", ""))
 				if item != "" and item not in items:
 					items.append(item)
+					picked = true
 				speaker = str(a.get("speaker", speaker))
 				text = str(a.get("text", text))
 			"flag":
@@ -189,13 +195,28 @@ func click_hotspot(spot: Dictionary) -> void:
 					speaker = str(a.get("speaker", "しおん"))
 					text = str(a.get("text", text))
 
+	if picked:
+		var hint := _next_step_hint()
+		if hint != "":
+			text = "%s %s" % [text, hint]
+
 	dialogue = {"speaker": speaker, "text": text}
 	dialogue_changed.emit()
 	inventory_changed.emit()
 	flags_changed.emit()
-	if next_scene != "":
-		await change_scene(next_scene)
 	persist()
+	if next_scene != "":
+		call_deferred("go_to", next_scene)
+
+
+func _next_step_hint() -> String:
+	if can_cook():
+		return "そろったね。上の『料理をはじめる』を押して。"
+	if scene == "moonCave":
+		if "starSalt" not in items:
+			return "星しおはキッチンの壺にあるよ。『もどる』で畑へ戻ろう。"
+		return "『もどる』でキッチンまで帰って、料理しよう。"
+	return ""
 
 
 func persist() -> void:

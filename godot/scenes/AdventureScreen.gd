@@ -4,6 +4,8 @@ extends Control
 var _art: Control
 var _spots: Control
 var _walker: TextureRect
+var _rebuild_queued := false
+var _backdrop_scene := ""
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -25,15 +27,38 @@ func _ready() -> void:
 
 
 func refresh() -> void:
-	for c in _art.get_children():
-		c.queue_free()
-	for c in _spots.get_children():
-		c.queue_free()
+	if _rebuild_queued:
+		return
+	_rebuild_queued = true
+	call_deferred("_rebuild")
+
+
+func _clear_later_children(parent: Control, keep := 0) -> void:
+	var kids := parent.get_children()
+	for i in range(kids.size() - 1, keep - 1, -1):
+		var c: Node = kids[i]
+		parent.remove_child(c)
+		c.free()
+
+
+func _rebuild() -> void:
+	_rebuild_queued = false
+	if not is_inside_tree():
+		return
 	_walker = null
 	var scene_id := GameState.scene
 	if scene_id not in Hotspots.ART:
+		_clear_later_children(_art, 0)
+		_clear_later_children(_spots, 0)
+		_backdrop_scene = ""
 		return
-	Art.backdrop(_art, Hotspots.ART[scene_id])
+	if _backdrop_scene != scene_id:
+		_clear_later_children(_art, 0)
+		Art.backdrop(_art, Hotspots.ART[scene_id])
+		_backdrop_scene = scene_id
+	else:
+		_clear_later_children(_art, 1)
+	_clear_later_children(_spots, 0)
 	_draw_overlays(scene_id)
 	for spot in Hotspots.visible(scene_id):
 		var captured: Dictionary = spot
@@ -61,6 +86,7 @@ func _draw_overlays(scene_id: String) -> void:
 			if GameState.can_cook():
 				var glow := Label.new()
 				glow.text = "つくれる！"
+				glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				glow.add_theme_color_override("font_color", Art.GOLD)
 				glow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 				Art.fill_pct(glow, 36, 62, 22, 8)
@@ -76,6 +102,15 @@ func _draw_overlays(scene_id: String) -> void:
 		"moonCave":
 			if not GameState.has_item("moonMilk"):
 				Art.sprite(_art, "res://assets/art/moon-well.png", 36, 46, 26, 32, false, true)
+			else:
+				var hint := Label.new()
+				hint.text = "画面をタップ、または『もどる』で畑へ"
+				hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				hint.add_theme_color_override("font_color", Art.GOLD)
+				hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				Art.fill_pct(hint, 18, 58, 64, 12)
+				_art.add_child(hint)
 
 
 func _walk_road(r: TextureRect) -> void:

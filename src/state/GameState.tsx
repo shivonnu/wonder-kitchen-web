@@ -107,6 +107,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (action.type === 'give') {
           if (!nextItems.includes(action.item)) nextItems.push(action.item)
           nextDialogue = { speaker: action.speaker, text: action.text }
+          if (action.item === 'moonMilk' && !nextItems.includes('starSalt')) {
+            nextDialogue = {
+              speaker: action.speaker,
+              text: `${action.text} 星しおはキッチンの壺にあるよ。『もどる』で畑へ戻ろう。`,
+            }
+          }
         }
         if (action.type === 'flag') {
           if (!nextFlags.includes(action.flag)) nextFlags.push(action.flag)
@@ -158,13 +164,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
         giveActions.every((a) => items.includes(a.item)) &&
         hotspot.actions.every((a) => a.type !== 'go')
       ) {
+        if (scene === 'moonCave') {
+          const text = '月牛乳はもう持ってるよ。畑へもどろう。'
+          setDialogue({ speaker: 'しおん', text })
+          changeScene('moonField')
+          snapshot({ scene: 'moonField', dialogue: { speaker: 'しおん', text } })
+          return
+        }
         setDialogue({ speaker: 'しおん', text: 'それは、もう持っているよ。' })
         return
       }
 
       applyActions(hotspot.actions, items, flags)
     },
-    [applyActions, flags, items, scene, snapshot],
+    [applyActions, changeScene, flags, items, scene, snapshot],
   )
 
   const goTo = useCallback(

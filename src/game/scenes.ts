@@ -278,6 +278,7 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
         y: 42,
         w: 16,
         h: 22,
+        hideWhenItem: ['potato'],
         actions: [
           {
             type: 'give',
@@ -294,6 +295,7 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
         y: 40,
         w: 14,
         h: 20,
+        hideWhenItem: ['onion'],
         actions: [
           {
             type: 'give',
@@ -365,12 +367,30 @@ export const SCENES: Record<SceneDef['id'], SceneDef> = {
         y: 46,
         w: 26,
         h: 32,
+        hideWhenItem: ['moonMilk'],
         actions: [
           {
             type: 'give',
             item: 'moonMilk',
             speaker: '月の井戸',
             text: '静かな白い液体。飲むと、夢のなかで潮の音がする。',
+          },
+        ],
+      },
+      {
+        id: 'leaveAfterMilk',
+        label: '畑へもどる',
+        x: 16,
+        y: 28,
+        w: 68,
+        h: 52,
+        showWhenItem: ['moonMilk'],
+        actions: [
+          {
+            type: 'go',
+            scene: 'moonField',
+            speaker: 'しおん',
+            text: '月牛乳はカバンへ。星しおはキッチンの壺だよ。もどってそろえよう。',
           },
         ],
       },
