@@ -55,7 +55,16 @@ func set_hand(next: String) -> void:
 	hand_changed.emit()
 
 
+func force_hand(next: String) -> void:
+	if hand == next:
+		return
+	hand = next
+	hand_changed.emit()
+
+
 func clear_hand() -> void:
+	if hand == "":
+		return
 	hand = ""
 	hand_changed.emit()
 
@@ -72,6 +81,26 @@ func start_new() -> void:
 	dialogue_changed.emit()
 	hand_changed.emit()
 	await change_scene("kitchen")
+	persist()
+
+
+func debug_fill_and_cook() -> void:
+	if not OS.is_debug_build():
+		return
+	items.clear()
+	for id in RECIPE:
+		items.append(id)
+	flags.clear()
+	for flag in ["metShion", "gotMemo", "lunaLeft", "windowOpen", "saltTaken"]:
+		flags.append(flag)
+	hand = ""
+	dialogue = {"speaker": "しおん", "text": "そろったね。つくってみよう。"}
+	has_save = true
+	inventory_changed.emit()
+	flags_changed.emit()
+	dialogue_changed.emit()
+	hand_changed.emit()
+	await change_scene("cooking")
 	persist()
 
 
