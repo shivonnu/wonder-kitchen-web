@@ -146,6 +146,11 @@ func _park_held(dest := "shelf") -> void:
 		GameState.clear_hand()
 		return
 	var fam := _family(hand)
+	if dest == "auto":
+		if (fam == "potato" or fam == "onion") and _board_occupant() in ["", fam]:
+			dest = "board"
+		else:
+			dest = "shelf"
 	if dest == "board":
 		var occ := _board_occupant()
 		if occ != "" and occ != fam:
@@ -183,7 +188,7 @@ func hold_from_inventory(id: String) -> void:
 		_refresh_visuals()
 		return
 	if GameState.hand != "":
-		_park_held("shelf")
+		_park_held("auto")
 	if loc[id] == "board":
 		loc[id] = "held"
 		GameState.force_hand(_hand_id(id))
@@ -398,6 +403,9 @@ func _process(_delta: float) -> void:
 		return
 	_held_fx.visible = true
 	var p := get_global_mouse_position()
+	var r := get_global_rect()
+	p.x = clampf(p.x, r.position.x + 8.0, r.position.x + maxf(24.0, r.size.x - 8.0))
+	p.y = clampf(p.y, r.position.y + 8.0, r.position.y + maxf(24.0, r.size.y - 8.0))
 	_held_fx.global_position = p + Vector2(14, -86)
 
 
