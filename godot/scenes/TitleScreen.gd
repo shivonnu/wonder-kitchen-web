@@ -73,6 +73,10 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F4:
+		GameState.debug_fill_and_cook()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_accept"):
 		GameState.start_new()
 		get_viewport().set_input_as_handled()

@@ -35,52 +35,64 @@ grow_vertical = 2
 theme_override_constants/separation = 10
 
 [node name="Hud" type="PanelContainer" parent="Root"]
-custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 
-[node name="HudRow" type="HBoxContainer" parent="Root/Hud"]
+[node name="HudCol" type="VBoxContainer" parent="Root/Hud"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 6
 
-[node name="Place" type="Label" parent="Root/Hud/HudRow"]
+[node name="TopRow" type="HFlowContainer" parent="Root/Hud/HudCol"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+
+[node name="Place" type="Label" parent="Root/Hud/HudCol/TopRow"]
 layout_mode = 2
 text = "夜のキッチン"
 
-[node name="Inventory" type="HBoxContainer" parent="Root/Hud/HudRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="Hand" type="Label" parent="Root/Hud/HudRow"]
+[node name="Hand" type="Label" parent="Root/Hud/HudCol/TopRow"]
 visible = false
 layout_mode = 2
 text = "手: 素手"
 
-[node name="Back" type="Button" parent="Root/Hud/HudRow"]
+[node name="Back" type="Button" parent="Root/Hud/HudCol/TopRow"]
 visible = false
 custom_minimum_size = Vector2(88, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "もどる"
 
-[node name="Cook" type="Button" parent="Root/Hud/HudRow"]
+[node name="Cook" type="Button" parent="Root/Hud/HudCol/TopRow"]
 visible = false
 custom_minimum_size = Vector2(148, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "料理をはじめる"
 
-[node name="Quit" type="Button" parent="Root/Hud/HudRow"]
+[node name="Quit" type="Button" parent="Root/Hud/HudCol/TopRow"]
 layout_mode = 2
 text = "やめる"
 
-[node name="Stage" type="Control" parent="Root"]
+[node name="Inventory" type="HFlowContainer" parent="Root/Hud/HudCol"]
 layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6
+
+[node name="StageHost" type="AspectRatioContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
+ratio = 1.7778
+stretch_mode = 0
+alignment_horizontal = 1
+alignment_vertical = 0
+
+[node name="Stage" type="Control" parent="Root/StageHost"]
+layout_mode = 2
 clip_contents = true
 
 [node name="Dialogue" type="PanelContainer" parent="Root"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 
 [node name="DialogueCol" type="VBoxContainer" parent="Root/Dialogue"]

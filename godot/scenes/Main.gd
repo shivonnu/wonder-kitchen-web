@@ -1,17 +1,18 @@
 extends Control
 
 @onready var hud: PanelContainer = $Root/Hud
-@onready var place_label: Label = $Root/Hud/HudRow/Place
-@onready var inventory: HBoxContainer = $Root/Hud/HudRow/Inventory
-@onready var back_btn: Button = $Root/Hud/HudRow/Back
-@onready var cook_btn: Button = $Root/Hud/HudRow/Cook
-@onready var quit_btn: Button = $Root/Hud/HudRow/Quit
-@onready var host: Control = $Root/Stage
+@onready var place_label: Label = $Root/Hud/HudCol/TopRow/Place
+@onready var inventory: HFlowContainer = $Root/Hud/HudCol/Inventory
+@onready var back_btn: Button = $Root/Hud/HudCol/TopRow/Back
+@onready var cook_btn: Button = $Root/Hud/HudCol/TopRow/Cook
+@onready var quit_btn: Button = $Root/Hud/HudCol/TopRow/Quit
+@onready var host: Control = $Root/StageHost/Stage
+@onready var stage_host: AspectRatioContainer = $Root/StageHost
 @onready var dialogue: PanelContainer = $Root/Dialogue
 @onready var speaker: Label = $Root/Dialogue/DialogueCol/Speaker
 @onready var body: Label = $Root/Dialogue/DialogueCol/Body
 @onready var fade: ColorRect = $Fade
-@onready var hand_label: Label = $Root/Hud/HudRow/Hand
+@onready var hand_label: Label = $Root/Hud/HudCol/TopRow/Hand
 
 func _ready() -> void:
 	Art.boot()
@@ -57,6 +58,8 @@ func _on_scene(_scene: String) -> void:
 
 
 func _show_scene(scene_id: String) -> void:
+	if scene_id != "cooking":
+		GameState.clear_hand()
 	for c in host.get_children():
 		c.queue_free()
 	var screen: Control
@@ -79,6 +82,7 @@ func _show_scene(scene_id: String) -> void:
 	var show_hud := scene_id != "title" and scene_id != "ending"
 	hud.visible = show_hud
 	dialogue.visible = show_hud
+	stage_host.alignment_vertical = 0 if show_hud else 1
 
 
 func _refresh_hud() -> void:
@@ -106,7 +110,10 @@ func _item_chip(id: String) -> Button:
 	b.text = str(meta["name"])
 	b.tooltip_text = str(meta["name"])
 	b.custom_minimum_size = Vector2(0, 32)
-	if GameState.scene == "cooking" and GameState.hand == id:
+	var held := GameState.hand
+	if held.begins_with("chopped_"):
+		held = held.substr(8)
+	if GameState.scene == "cooking" and held == id:
 		b.add_theme_stylebox_override("normal", Art.primary_style())
 		b.add_theme_color_override("font_color", Art.NAVY)
 	if GameState.scene == "cooking":
@@ -121,6 +128,10 @@ func _pick_item(id: String) -> void:
 	if id == "memo":
 		GameState.say("メモ", "月あかりポタージュ：星いも、月たまねぎ、月牛乳、仕上げに星しお。")
 		return
+	for c in host.get_children():
+		if c.has_method("hold_from_inventory"):
+			c.hold_from_inventory(id)
+			return
 	GameState.set_hand(id)
 	GameState.say("しおん", "%sを手に持った。" % Hotspots.HAND_NAMES.get(id, id))
 
