@@ -9,29 +9,44 @@
 
 公開 URL: https://shivonnu.github.io/wonder-kitchen-web/
 
-ローカルでは:
+Godot 4 の HTML5 書き出しです。初回は wasm と pck でおよそ 55MB 読み込みます。
+クリックで進みます。失敗はありません。タイトルは「はじめる」または Enter です。
+料理はアイテムを持って、蛇口・まな板・包丁・鍋へ使います。
 
-1. `npm install`
-2. `npm run dev`
-3. 画面の気になるところをクリック（失敗はありません）
-4. ルナのメモ、星いも、月たまねぎ、月牛乳、星しおを集める
-5. 「料理をはじめる」で手順どおりにクリック
+進行はブラウザ内（Godot の `user://`）に保存されます。
 
-進行はブラウザの `localStorage` に保存されます。
+## ローカル（Godot）
 
-## Godot 版（移植中）
-
-同じ物語を Godot 4.7 に移植した試作が [`godot/`](godot/) にあります。料理はボタン順ではなく、手に持って蛇口・まな板・包丁・鍋へ使います。公開サイトはまだ React 版です。
+[Godot 4.7](https://godotengine.org/download) で:
 
 ```
 godot --path godot
 ```
 
+GitHub Pages と同じ HTML5 を書き出すには:
+
+```
+BASE_PATH=/wonder-kitchen-web/ ./scripts/export-godot-web.sh
+mkdir -p /tmp/pages/wonder-kitchen-web
+cp -a build/web/. /tmp/pages/wonder-kitchen-web/
+python3 -m http.server 8088 --directory /tmp/pages
+```
+
+ブラウザで http://127.0.0.1:8088/wonder-kitchen-web/ を開きます。
+
+## React 試作
+
+以前の React 版は [`src/`](src/) に残っています。
+
+```
+npm install
+npm run dev
+```
+
 ## GitHub Pages
 
-公開 URL: https://shivonnu.github.io/wonder-kitchen-web/
-
-`main` への push で GitHub Actions が `dist/` を GitHub Pages に載せます。
+`main` への push で GitHub Actions が Godot の Web 書き出しを GitHub Pages に載せます。
+GitHub Pages は COOP/COEP を付けないため、HTML5 はスレッドなし（`web_nothreads_release`）です。PWA にはしていません。
 
 ### 初回だけ必要な設定
 

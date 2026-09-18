@@ -1,0 +1,3 @@
+Copied from the official Godot 4.7.2.stable export templates (MIT).
+https://github.com/godotengine/godot/releases/tag/4.7.2-stable
+GitHub Pages does not send COOP/COEP, so this is the threadless web template only.
