@@ -2,18 +2,18 @@ class_name CookingScreen
 extends Control
 
 const SHELF := {
-	"potato": [1.2, 7.0, 7.0, 14.0],
-	"onion": [8.0, 7.0, 7.0, 14.0],
-	"moonMilk": [14.8, 5.0, 5.4, 16.5],
-	"starSalt": [20.0, 8.5, 5.2, 11.5],
+	"potato": [0.3, 5.0, 8.2, 17.0],
+	"onion": [8.0, 5.0, 8.0, 17.0],
+	"moonMilk": [15.6, 3.2, 6.2, 18.8],
+	"starSalt": [21.2, 7.0, 5.8, 13.0],
 }
 
 const ART := {
-	"potato": "res://assets/art/potato.png",
-	"onion": "res://assets/art/onion.png",
-	"moonMilk": "res://assets/art/icon-milk.png",
-	"starSalt": "res://assets/art/icon-salt.png",
-	"knife": "res://assets/art/icon-knife.png",
+	"potato": "res://assets/art/cook-potato.png",
+	"onion": "res://assets/art/cook-onion.png",
+	"moonMilk": "res://assets/art/cook-milk.png",
+	"starSalt": "res://assets/art/cook-salt.png",
+	"knife": "res://assets/art/cook-knife.png",
 }
 
 const POT_ICON := {
@@ -442,13 +442,6 @@ func _refresh_visuals() -> void:
 
 	if water_on:
 		Art.sprite(_overlays, "res://assets/art/water-stream.png", 6.4, 40.5, 5.2, 22.0, false, false)
-
-	if pot_water and not _done:
-		var drop := ColorRect.new()
-		drop.color = Color(0.55, 0.78, 1.0, 0.32)
-		drop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		Art.fill_pct(drop, 24.2, 33.5, 8.4, 5.2)
-		_overlays.add_child(drop)
 
 	if pot_fire and not _done:
 		Art.sprite(_overlays, "res://assets/art/icon-fire.png", 23.5, 47.0, 8.0, 12.5, false, true)

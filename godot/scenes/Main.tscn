@@ -85,7 +85,7 @@ size_flags_vertical = 3
 ratio = 1.7778
 stretch_mode = 0
 alignment_horizontal = 1
-alignment_vertical = 1
+alignment_vertical = 0
 
 [node name="Stage" type="Control" parent="Root/StageHost"]
 layout_mode = 2

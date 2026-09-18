@@ -7,6 +7,7 @@ extends Control
 @onready var cook_btn: Button = $Root/Hud/HudCol/TopRow/Cook
 @onready var quit_btn: Button = $Root/Hud/HudCol/TopRow/Quit
 @onready var host: Control = $Root/StageHost/Stage
+@onready var stage_host: AspectRatioContainer = $Root/StageHost
 @onready var dialogue: PanelContainer = $Root/Dialogue
 @onready var speaker: Label = $Root/Dialogue/DialogueCol/Speaker
 @onready var body: Label = $Root/Dialogue/DialogueCol/Body
@@ -81,6 +82,7 @@ func _show_scene(scene_id: String) -> void:
 	var show_hud := scene_id != "title" and scene_id != "ending"
 	hud.visible = show_hud
 	dialogue.visible = show_hud
+	stage_host.alignment_vertical = 0 if show_hud else 1
 
 
 func _refresh_hud() -> void:
