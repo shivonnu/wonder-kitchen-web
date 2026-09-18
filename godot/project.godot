@@ -1,0 +1,35 @@
+; Engine configuration file.
+; Godot 4.7 — ほししおの台所
+config_version=5
+
+[application]
+
+config/name="ほししおの台所"
+config/description="夜の塩の島で、月あかりポタージュをつくるポイント＆クリック"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://assets/art/icon-salt.png"
+
+[autoload]
+
+GameState="*res://autoload/GameState.gd"
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[gui]
+
+theme/custom_font="res://assets/fonts/ZenMaruGothic-Medium.ttf"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.web="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true
+environment/defaults/default_clear_color=Color(0.043, 0.063, 0.149, 1)

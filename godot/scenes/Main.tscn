@@ -1,0 +1,103 @@
+[gd_scene load_steps=2 format=3 uid="uid://hoshishio_main"]
+
+[ext_resource type="Script" path="res://scenes/Main.gd" id="1_main"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="Bg" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.043, 0.063, 0.149, 1)
+
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="Hud" type="PanelContainer" parent="Root"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+
+[node name="HudRow" type="HBoxContainer" parent="Root/Hud"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Place" type="Label" parent="Root/Hud/HudRow"]
+layout_mode = 2
+text = "夜のキッチン"
+
+[node name="Inventory" type="HBoxContainer" parent="Root/Hud/HudRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Hand" type="Label" parent="Root/Hud/HudRow"]
+visible = false
+layout_mode = 2
+text = "手: 素手"
+
+[node name="Back" type="Button" parent="Root/Hud/HudRow"]
+visible = false
+layout_mode = 2
+text = "もどる"
+
+[node name="Cook" type="Button" parent="Root/Hud/HudRow"]
+visible = false
+layout_mode = 2
+text = "料理をはじめる"
+
+[node name="Quit" type="Button" parent="Root/Hud/HudRow"]
+layout_mode = 2
+text = "やめる"
+
+[node name="Stage" type="Control" parent="Root"]
+layout_mode = 2
+size_flags_vertical = 3
+clip_contents = true
+
+[node name="Dialogue" type="PanelContainer" parent="Root"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+
+[node name="DialogueCol" type="VBoxContainer" parent="Root/Dialogue"]
+layout_mode = 2
+
+[node name="Speaker" type="Label" parent="Root/Dialogue/DialogueCol"]
+layout_mode = 2
+text = "しおん"
+
+[node name="Body" type="Label" parent="Root/Dialogue/DialogueCol"]
+layout_mode = 2
+autowrap_mode = 3
+text = "夜のキッチンだよ。気になるところを、どんどん触ってみて。"
+
+[node name="Fade" type="ColorRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.027, 0.043, 0.11, 1)
