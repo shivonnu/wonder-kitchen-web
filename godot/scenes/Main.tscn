@@ -83,7 +83,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 ratio = 1.7778
-stretch_mode = 0
+stretch_mode = 2
 alignment_horizontal = 1
 alignment_vertical = 0
 
@@ -106,6 +106,28 @@ text = "しおん"
 layout_mode = 2
 autowrap_mode = 3
 text = "夜のキッチンだよ。気になるところを、どんどん触ってみて。"
+
+[node name="Overlay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ChromeHost" type="VBoxContainer" parent="Overlay"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+theme_override_constants/separation = 8
 
 [node name="Fade" type="ColorRect" parent="."]
 modulate = Color(1, 1, 1, 0)
