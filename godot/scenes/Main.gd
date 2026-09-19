@@ -8,6 +8,9 @@ extends Control
 @onready var quit_btn: Button = $Root/Hud/HudCol/TopRow/Quit
 @onready var host: Control = $Root/StageHost/Stage
 @onready var stage_host: AspectRatioContainer = $Root/StageHost
+@onready var root_box: VBoxContainer = $Root
+@onready var overlay: Control = $Overlay
+@onready var chrome_host: VBoxContainer = $Overlay/ChromeHost
 @onready var dialogue: PanelContainer = $Root/Dialogue
 @onready var speaker: Label = $Root/Dialogue/DialogueCol/Speaker
 @onready var body: Label = $Root/Dialogue/DialogueCol/Body
@@ -26,9 +29,12 @@ func _ready() -> void:
 	back_btn.pressed.connect(_on_back)
 	cook_btn.pressed.connect(_on_cook)
 	quit_btn.pressed.connect(func() -> void: GameState.reset())
+	resized.connect(_adapt_layout)
+	get_viewport().size_changed.connect(_adapt_layout)
 	_show_scene(GameState.scene)
 	_refresh_hud()
 	_refresh_dialogue()
+	_adapt_layout()
 
 
 func _apply_theme() -> void:
@@ -82,7 +88,7 @@ func _show_scene(scene_id: String) -> void:
 	var show_hud := scene_id != "title" and scene_id != "ending"
 	hud.visible = show_hud
 	dialogue.visible = show_hud
-	stage_host.alignment_vertical = 0 if show_hud else 1
+	_adapt_layout()
 
 
 func _refresh_hud() -> void:
@@ -154,3 +160,112 @@ func _on_cook() -> void:
 func _on_fade(on: bool) -> void:
 	var tw := create_tween()
 	tw.tween_property(fade, "modulate:a", 1.0 if on else 0.0, 0.26)
+
+
+func _chrome_visible() -> bool:
+	return GameState.scene != "title" and GameState.scene != "ending"
+
+
+func _adapt_layout() -> void:
+	if not is_node_ready():
+		return
+	stage_host.stretch_mode = AspectRatioContainer.STRETCH_FIT
+	stage_host.ratio = 16.0 / 9.0
+	var show_chrome := _chrome_visible()
+	if not show_chrome:
+		_layout_fullbleed()
+		return
+	var aspect := size.x / maxf(size.y, 1.0)
+	if aspect >= 1.55:
+		_layout_wide()
+	else:
+		_layout_stack()
+
+
+func _layout_fullbleed() -> void:
+	_return_chrome_to_stack()
+	root_box.add_theme_constant_override("separation", 0)
+	root_box.offset_left = 0.0
+	root_box.offset_top = 0.0
+	root_box.offset_right = 0.0
+	root_box.offset_bottom = 0.0
+	stage_host.alignment_horizontal = 1
+	stage_host.alignment_vertical = 1
+	chrome_host.visible = false
+	hud.visible = false
+	dialogue.visible = false
+
+
+func _layout_stack() -> void:
+	_return_chrome_to_stack()
+	root_box.add_theme_constant_override("separation", 10)
+	root_box.offset_left = 12.0
+	root_box.offset_top = 12.0
+	root_box.offset_right = -12.0
+	root_box.offset_bottom = -12.0
+	dialogue.custom_minimum_size = Vector2(0, 88)
+	hud.size_flags_vertical = Control.SIZE_FILL
+	dialogue.size_flags_vertical = Control.SIZE_FILL
+	stage_host.alignment_horizontal = 1
+	stage_host.alignment_vertical = 0
+	chrome_host.visible = false
+	hud.visible = true
+	dialogue.visible = true
+
+
+func _layout_wide() -> void:
+	var chrome_w := _chrome_width()
+	root_box.add_theme_constant_override("separation", 0)
+	root_box.offset_left = 6.0
+	root_box.offset_top = 6.0
+	root_box.offset_right = -(chrome_w + 8.0)
+	root_box.offset_bottom = -6.0
+	stage_host.alignment_horizontal = 1
+	stage_host.alignment_vertical = 1
+	if hud.get_parent() != chrome_host:
+		hud.reparent(chrome_host, false)
+		dialogue.reparent(chrome_host, false)
+	hud.layout_mode = 2
+	dialogue.layout_mode = 2
+	hud.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dialogue.size_flags_vertical = Control.SIZE_FILL
+	dialogue.custom_minimum_size = Vector2(0, 108)
+	chrome_host.visible = true
+	chrome_host.layout_mode = 1
+	chrome_host.anchor_left = 1.0
+	chrome_host.anchor_top = 0.0
+	chrome_host.anchor_right = 1.0
+	chrome_host.anchor_bottom = 1.0
+	chrome_host.offset_left = -(chrome_w + 2.0)
+	chrome_host.offset_top = 6.0
+	chrome_host.offset_right = -6.0
+	chrome_host.offset_bottom = -6.0
+	hud.visible = true
+	dialogue.visible = true
+
+
+func _chrome_width() -> float:
+	var fit_w := size.y * 16.0 / 9.0
+	var leftover := maxf(0.0, size.x - fit_w)
+	var w := leftover
+	if leftover < 176.0:
+		w = clampf(size.x * 0.26, 168.0, 240.0)
+	else:
+		w = clampf(leftover - 12.0, 176.0, 300.0)
+	var min_stage := size.y * 16.0 / 9.0 * 0.72
+	w = minf(w, maxf(160.0, size.x - min_stage - 12.0))
+	return w
+
+
+func _return_chrome_to_stack() -> void:
+	if hud.get_parent() == root_box:
+		return
+	hud.reparent(root_box, false)
+	dialogue.reparent(root_box, false)
+	root_box.move_child(hud, 0)
+	root_box.move_child(stage_host, 1)
+	root_box.move_child(dialogue, 2)
+	hud.layout_mode = 2
+	dialogue.layout_mode = 2
+	hud.size_flags_vertical = Control.SIZE_FILL
+	dialogue.size_flags_vertical = Control.SIZE_FILL
