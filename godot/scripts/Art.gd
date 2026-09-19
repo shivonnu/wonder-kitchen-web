@@ -83,7 +83,7 @@ static func backdrop(parent: Control, path: String) -> TextureRect:
 	var bg := TextureRect.new()
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	bg.texture = load(path)
 	bg.layout_mode = 1

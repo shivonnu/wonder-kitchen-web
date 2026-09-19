@@ -472,6 +472,9 @@ func _refresh_visuals() -> void:
 		if chopped[occ]:
 			_board_item.modulate = Color(0.92, 0.95, 1.0)
 
+	if loc.get("knife", "") == "table":
+		Art.sprite(_overlays, ART["knife"], 64.0, 57.5, 17.5, 19.0, false, false)
+
 	if not _done:
 		for id in POT_ICON:
 			if loc.get(id, "") != "pot":
