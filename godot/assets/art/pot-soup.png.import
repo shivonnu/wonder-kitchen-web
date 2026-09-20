@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cdox01uicbiq2"
-valid=false
+uid="uid://d6ceu04kcg7h"
+path="res://.godot/imported/pot-soup.png-5b925500120df6bf44f6c5e881910fd7.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://assets/art/pot-soup.png"
+dest_files=["res://.godot/imported/pot-soup.png-5b925500120df6bf44f6c5e881910fd7.ctex"]
 
 [params]
 

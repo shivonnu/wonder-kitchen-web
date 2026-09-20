@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://wdikt5bki0ue"
-valid=false
+uid="uid://c2yckrxk3cg7a"
+path="res://.godot/imported/cook-potato-chopped.png-366573059cb5351b69fc3dfebca81d7c.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://assets/art/cook-potato-chopped.png"
+dest_files=["res://.godot/imported/cook-potato-chopped.png-366573059cb5351b69fc3dfebca81d7c.ctex"]
 
 [params]
 

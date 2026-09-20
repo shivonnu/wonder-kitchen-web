@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dshgc0kfh6o3m"
-valid=false
+uid="uid://b5ay3odolyi8y"
+path="res://.godot/imported/cook-onion-chopped.png-d9d6430ffcda44cdb092b610d5d7060d.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://assets/art/cook-onion-chopped.png"
+dest_files=["res://.godot/imported/cook-onion-chopped.png-d9d6430ffcda44cdb092b610d5d7060d.ctex"]
 
 [params]
 
