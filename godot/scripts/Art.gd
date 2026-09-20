@@ -123,6 +123,19 @@ static func ghost_style() -> StyleBoxFlat:
 	return s
 
 
+static func moment_style() -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color(0.043, 0.063, 0.149, 0.97)
+	s.border_color = GOLD
+	s.set_border_width_all(3)
+	s.set_corner_radius_all(8)
+	s.content_margin_left = 22
+	s.content_margin_right = 22
+	s.content_margin_top = 18
+	s.content_margin_bottom = 16
+	return s
+
+
 static func primary_style() -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = GOLD

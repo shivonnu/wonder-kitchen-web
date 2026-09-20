@@ -11,16 +11,11 @@ const SHELF := {
 const ART := {
 	"potato": "res://assets/art/cook-potato.png",
 	"onion": "res://assets/art/cook-onion.png",
+	"chopped_potato": "res://assets/art/cook-potato-chopped.png",
+	"chopped_onion": "res://assets/art/cook-onion-chopped.png",
 	"moonMilk": "res://assets/art/cook-milk.png",
 	"starSalt": "res://assets/art/cook-salt.png",
 	"knife": "res://assets/art/cook-knife.png",
-}
-
-const POT_ICON := {
-	"potato": [22.5, 31.5, 6.5, 8.5],
-	"onion": [27.5, 33.0, 6.0, 8.0],
-	"moonMilk": [25.0, 28.5, 5.0, 9.0],
-	"starSalt": [29.5, 30.0, 4.5, 6.5],
 }
 
 var loc := {
@@ -167,6 +162,21 @@ func _park_held(dest := "shelf") -> void:
 	GameState.clear_hand()
 
 
+func _cook_art(id: String) -> String:
+	if chopped.get(id, false):
+		var chopped_id := "chopped_" + id
+		if ART.has(chopped_id):
+			return ART[chopped_id]
+	return str(ART.get(id, ""))
+
+
+func _pot_has_food() -> bool:
+	for id in ["potato", "onion", "moonMilk", "starSalt"]:
+		if loc.get(id, "") == "pot":
+			return true
+	return false
+
+
 func hold_from_inventory(id: String) -> void:
 	if _done:
 		return
@@ -202,6 +212,8 @@ func hold_from_inventory(id: String) -> void:
 
 
 func _on_shelf() -> void:
+	if _done:
+		return
 	var hand := GameState.hand
 	if hand == "":
 		_hint("食材が並んでいる棚。とりたいものをタップしてね。")
@@ -217,6 +229,8 @@ func _on_shelf() -> void:
 
 
 func _on_faucet() -> void:
+	if _done:
+		return
 	if GameState.hand != "":
 		_hint("蛇口は素手でひねってね。持っているものは、いったん置こう。")
 		return
@@ -230,6 +244,8 @@ func _on_faucet() -> void:
 
 
 func _on_knife() -> void:
+	if _done:
+		return
 	if GameState.hand == "knife":
 		_park_held("table")
 		_hint("包丁をテーブルに戻した。")
@@ -244,6 +260,8 @@ func _on_knife() -> void:
 
 
 func _on_board() -> void:
+	if _done:
+		return
 	var hand := GameState.hand
 	if hand == "knife":
 		var occ := _board_occupant()
@@ -299,6 +317,8 @@ func _on_board() -> void:
 
 
 func _on_pot() -> void:
+	if _done:
+		return
 	var hand := GameState.hand
 	if water_on and not pot_water and hand == "":
 		pot_water = true
@@ -352,6 +372,8 @@ func _on_pot() -> void:
 
 
 func _on_fire() -> void:
+	if _done:
+		return
 	if GameState.hand != "":
 		_hint("火は素手でつけて。持っているものは、いったん置いてね。")
 		return
@@ -425,14 +447,13 @@ func _update_held_tex() -> void:
 	var key := _family(hand)
 	if hand == "knife":
 		key = "knife"
+	if hand.begins_with("chopped_"):
+		key = hand
 	if hand == "" or not ART.has(key):
 		_held_fx.texture = null
 		return
 	_held_fx.texture = load(ART[key])
-	if hand.begins_with("chopped_"):
-		_held_fx.modulate = Color(0.92, 0.95, 1.0)
-	else:
-		_held_fx.modulate = Color.WHITE
+	_held_fx.modulate = Color.WHITE
 
 
 func _refresh_visuals() -> void:
@@ -451,37 +472,28 @@ func _refresh_visuals() -> void:
 	if water_on:
 		Art.sprite(_overlays, "res://assets/art/water-stream.png", 6.4, 40.5, 5.2, 22.0, false, false)
 
-	if pot_fire and not _done:
-		Art.sprite(_overlays, "res://assets/art/icon-fire.png", 23.5, 47.0, 8.0, 12.5, false, true)
-		Art.sprite(_overlays, "res://assets/art/bowl-cook-sheet.png", 21.5, 24.0, 14.0, 20.0, true, true)
-
 	if _done:
-		Art.sprite(_overlays, "res://assets/art/bowl-finished.png", 21.0, 22.0, 16.0, 22.0)
+		Art.sprite(_overlays, "res://assets/art/pot-potage.png", 17.6, 25.2, 18.4, 26.5, false, false)
+	elif _pot_has_food():
+		Art.sprite(_overlays, "res://assets/art/pot-soup.png", 17.6, 25.2, 18.4, 26.5, false, false)
+	elif pot_water:
+		Art.sprite(_overlays, "res://assets/art/pot-water.png", 17.6, 25.2, 18.4, 26.5, false, false)
+
+	if pot_fire:
+		Art.sprite(_overlays, "res://assets/art/icon-fire.png", 23.5, 47.0, 8.0, 12.5, false, true)
 
 	for id in SHELF:
 		if loc.get(id, "") != "shelf":
 			continue
 		var pos: Array = SHELF[id]
-		var spr := Art.sprite(_overlays, ART[id], float(pos[0]), float(pos[1]), float(pos[2]), float(pos[3]), false, true)
-		if chopped.get(id, false):
-			spr.modulate = Color(0.92, 0.95, 1.0)
+		Art.sprite(_overlays, _cook_art(id), float(pos[0]), float(pos[1]), float(pos[2]), float(pos[3]), false, true)
 
 	var occ := _board_occupant()
 	if occ != "":
-		_board_item = Art.sprite(_overlays, ART[occ], 46.0, 60.0, 13.0, 17.0, false, chopped[occ])
-		if chopped[occ]:
-			_board_item.modulate = Color(0.92, 0.95, 1.0)
+		_board_item = Art.sprite(_overlays, _cook_art(occ), 46.0, 60.0, 13.0, 17.0, false, chopped[occ])
 
 	if loc.get("knife", "") == "table":
 		Art.sprite(_overlays, ART["knife"], 64.0, 57.5, 17.5, 19.0, false, false)
-
-	if not _done:
-		for id in POT_ICON:
-			if loc.get(id, "") != "pot":
-				continue
-			var p: Array = POT_ICON[id]
-			var s := Art.sprite(_overlays, ART[id], float(p[0]), float(p[1]), float(p[2]), float(p[3]), false, false)
-			s.modulate = Color(1, 1, 1, 0.92)
 
 
 func _check_done() -> void:
@@ -491,9 +503,7 @@ func _check_done() -> void:
 		_done = true
 		_refresh_visuals()
 		GameState.say("しおん", "月あかりポタージュ、できたよ。")
-		await get_tree().create_timer(1.2).timeout
-		await GameState.go_to(
-			"ending",
-			"しおん",
-			"あったかい……星が、お腹のなかで溶けていく。ありがとう。"
-		)
+		await get_tree().create_timer(0.8).timeout
+		if not is_inside_tree():
+			return
+		GameState.present_dish()
