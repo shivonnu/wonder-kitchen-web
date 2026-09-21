@@ -35,6 +35,12 @@ var pot_fire := false
 var _done := false
 var _fx: Node2D
 var _water: CPUParticles2D
+var _pot_fx: Node2D
+var _salt_burst: CPUParticles2D
+var _salt_twinkle: CPUParticles2D
+var _salt_sparking := false
+var _orbit_stars: Array[Sprite2D] = []
+var _orbit_t := 0.0
 var _overlays: Control
 var _held_fx: TextureRect
 var _board_item: TextureRect
@@ -66,12 +72,21 @@ func _ready() -> void:
 	_water.gravity = Vector2(0, 80)
 	_water.color = Color(0.72, 0.85, 1.0, 0.85)
 	_fx.add_child(_water)
+
+	_pot_fx = Node2D.new()
+	_pot_fx.z_index = 6
+	add_child(_pot_fx)
+	_salt_burst = _make_salt_particles(true)
+	_salt_twinkle = _make_salt_particles(false)
+	_pot_fx.add_child(_salt_burst)
+	_pot_fx.add_child(_salt_twinkle)
+
 	resized.connect(_place_fx)
 	_place_fx()
 
 	Art.hotspot(self, "蛇口", 0, 32, 18, 38, _on_faucet)
 	Art.hotspot(self, "お鍋", 18, 26, 18, 28, _on_pot)
-	Art.hotspot(self, "火", 20, 52, 14, 16, _on_fire)
+	Art.hotspot(self, "火", 18, 44, 20, 26, _on_fire)
 	Art.hotspot(self, "まな板", 38, 56, 28, 30, _on_board)
 	Art.hotspot(self, "包丁", 64, 56, 18, 22, _on_knife)
 	Art.hotspot(self, "棚", 0, 3, 26, 26, _on_shelf)
@@ -106,7 +121,14 @@ func _ready() -> void:
 
 
 func _place_fx() -> void:
-	_fx.position = Vector2(size.x * 0.09, size.y * 0.48)
+	_fx.position = Vector2(size.x * 0.117, size.y * 0.48)
+	if _pot_fx:
+		_pot_fx.position = Vector2(size.x * 0.312, size.y * 0.405)
+		var rad := minf(size.x, size.y) * 0.125
+		if _salt_twinkle:
+			_salt_twinkle.emission_sphere_radius = rad
+		if _salt_burst:
+			_salt_burst.emission_sphere_radius = rad * 0.55
 
 
 func _hint(text: String) -> void:
@@ -355,6 +377,7 @@ func _on_pot() -> void:
 		loc["starSalt"] = "pot"
 		GameState.clear_hand()
 		_hint("粒がスープの表面で、短い星になった。")
+		_begin_salt_sparkle()
 	elif hand == "knife":
 		_hint("包丁はまな板で使ってね。")
 	elif hand == "":
@@ -422,6 +445,7 @@ func _chop() -> void:
 
 
 func _process(_delta: float) -> void:
+	_tick_salt_orbit(_delta)
 	if _held_fx == null:
 		return
 	if GameState.hand == "":
@@ -442,6 +466,94 @@ func _gui_input(event: InputEvent) -> void:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and GameState.hand != "":
 			_hint("まな板、お鍋、棚のどれかをタップして置いてね。")
+
+
+func _make_salt_particles(burst: bool) -> CPUParticles2D:
+	Art.boot()
+	var p := CPUParticles2D.new()
+	p.emitting = false
+	p.texture = load("res://assets/art/sparkle.png")
+	p.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	p.amount = 48 if burst else 28
+	p.lifetime = 0.85 if burst else 1.35
+	p.one_shot = burst
+	p.explosiveness = 0.88 if burst else 0.08
+	p.randomness = 0.4
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE_SURFACE
+	p.emission_sphere_radius = 48.0
+	p.direction = Vector2(0, -1)
+	p.spread = 180
+	p.gravity = Vector2(0.0, -18.0 if burst else -8.0)
+	p.initial_velocity_min = 22.0 if burst else 6.0
+	p.initial_velocity_max = 86.0 if burst else 26.0
+	p.angular_velocity_min = -90.0
+	p.angular_velocity_max = 90.0
+	p.scale_amount_min = 0.28 if burst else 0.18
+	p.scale_amount_max = 0.72 if burst else 0.48
+	var curve := Curve.new()
+	curve.add_point(Vector2(0.0, 0.2))
+	curve.add_point(Vector2(0.28, 1.0))
+	curve.add_point(Vector2(1.0, 0.0))
+	p.scale_amount_curve = curve
+	p.color = Art.GOLD if burst else Art.SALT
+	var grad := Gradient.new()
+	if burst:
+		grad.offsets = PackedFloat32Array([0.0, 0.35, 1.0])
+		grad.colors = PackedColorArray([Color(1, 1, 1, 1), Art.GOLD, Color(Art.GOLD.r, Art.GOLD.g, Art.GOLD.b, 0)])
+	else:
+		grad.offsets = PackedFloat32Array([0.0, 0.45, 1.0])
+		grad.colors = PackedColorArray([Color(1, 1, 1, 1), Art.SALT, Color(Art.GOLD.r, Art.GOLD.g, Art.GOLD.b, 0)])
+	p.color_ramp = grad
+	p.local_coords = true
+	return p
+
+
+func _begin_salt_sparkle() -> void:
+	if _salt_sparking:
+		return
+	_salt_sparking = true
+	_place_fx()
+	_spawn_orbit_stars()
+	if _salt_burst:
+		_salt_burst.restart()
+		_salt_burst.emitting = true
+	if _salt_twinkle:
+		_salt_twinkle.emitting = true
+
+
+func _spawn_orbit_stars() -> void:
+	for old in _orbit_stars:
+		if is_instance_valid(old):
+			old.queue_free()
+	_orbit_stars.clear()
+	var tex: Texture2D = load("res://assets/art/sparkle.png")
+	for i in 8:
+		var s := Sprite2D.new()
+		s.texture = tex
+		s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		s.centered = true
+		_pot_fx.add_child(s)
+		_orbit_stars.append(s)
+	_orbit_t = 0.0
+	_tick_salt_orbit(0.0)
+
+
+func _tick_salt_orbit(delta: float) -> void:
+	if not _salt_sparking or _orbit_stars.is_empty():
+		return
+	_orbit_t += delta
+	var rx := minf(size.x, size.y) * 0.125
+	var ry := rx * 0.58
+	var n := _orbit_stars.size()
+	for i in n:
+		var s: Sprite2D = _orbit_stars[i]
+		if not is_instance_valid(s):
+			continue
+		var a := _orbit_t * 1.45 + TAU * float(i) / float(n)
+		s.position = Vector2(cos(a) * rx, sin(a) * ry - 6.0)
+		var twinkle: float = 0.4 + 0.6 * absf(sin(_orbit_t * 7.2 + float(i) * 1.6))
+		s.modulate = Color(1, 1, 1, twinkle)
+		s.scale = Vector2.ONE * (0.42 + 0.5 * twinkle)
 
 
 func _add_pot_liquid(path: String) -> void:
@@ -488,7 +600,7 @@ func _refresh_visuals() -> void:
 		btn.mouse_filter = Control.MOUSE_FILTER_STOP if on_shelf else Control.MOUSE_FILTER_IGNORE
 
 	if water_on:
-		Art.sprite(_overlays, "res://assets/art/water-stream.png", 6.4, 40.5, 5.2, 22.0, false, false)
+		Art.sprite(_overlays, "res://assets/art/water-stream.png", 8.7, 40.5, 5.2, 22.0, false, false)
 
 	if _done:
 		_add_pot_liquid("res://assets/art/pot-potage.png")
@@ -497,8 +609,15 @@ func _refresh_visuals() -> void:
 	elif pot_water:
 		_add_pot_liquid("res://assets/art/pot-water.png")
 
+	# Ingredient parts stack independently of add order.
+	if loc.get("moonMilk", "") == "pot":
+		_add_pot_liquid("res://assets/art/pot-milk-swirl.png")
+	if loc.get("onion", "") == "pot":
+		_add_pot_liquid("res://assets/art/pot-onion-bits.png")
+
 	if pot_fire:
-		Art.sprite(_overlays, "res://assets/art/icon-fire.png", 23.5, 47.0, 8.0, 12.5, false, true)
+		for flame_x in [23.5, 27.2, 30.9]:
+			Art.sprite(_overlays, "res://assets/art/icon-fire.png", flame_x, 47.0, 8.0, 12.5, false, true)
 
 	for id in SHELF:
 		if loc.get(id, "") != "shelf":
@@ -514,6 +633,20 @@ func _refresh_visuals() -> void:
 		Art.sprite(_overlays, ART["knife"], 64.0, 57.5, 17.5, 19.0, false, false)
 
 
+func _end_salt_sparkle() -> void:
+	_salt_sparking = false
+	if _salt_burst:
+		_salt_burst.emitting = false
+		_salt_burst.visible = false
+	if _salt_twinkle:
+		_salt_twinkle.emitting = false
+		_salt_twinkle.visible = false
+	for s in _orbit_stars:
+		if is_instance_valid(s):
+			s.queue_free()
+	_orbit_stars.clear()
+
+
 func _check_done() -> void:
 	if _done:
 		return
@@ -521,7 +654,8 @@ func _check_done() -> void:
 		_done = true
 		_refresh_visuals()
 		GameState.say("しおん", "月あかりポタージュ、できたよ。")
-		await get_tree().create_timer(0.8).timeout
+		await get_tree().create_timer(1.5).timeout
 		if not is_inside_tree():
 			return
+		_end_salt_sparkle()
 		GameState.present_dish()

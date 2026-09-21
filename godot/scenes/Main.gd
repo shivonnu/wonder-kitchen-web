@@ -36,6 +36,7 @@ var _moment_spark: CPUParticles2D
 var _moment_token := 0
 var _moment_mode := ""
 var _moment_opened_msec := 0
+var _moment_armed := false
 
 
 func _ready() -> void:
@@ -304,6 +305,7 @@ func _build_moment() -> void:
 	_moment_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_moment_dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	_moment_dim.gui_input.connect(_on_moment_input)
+	moment.gui_input.connect(_on_moment_input)
 	moment.add_child(_moment_dim)
 
 	_moment_spark = CPUParticles2D.new()
@@ -406,6 +408,7 @@ func _open_moment(mode: String, icon_path: String, kicker: String, title: String
 	_moment_spark.emitting = false
 	_moment_spark.restart()
 	_moment_spark.emitting = true
+	_moment_armed = false
 	moment.visible = true
 	moment.mouse_filter = Control.MOUSE_FILTER_STOP
 	_moment_dim.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -425,12 +428,27 @@ func _open_moment(mode: String, icon_path: String, kicker: String, title: String
 func _on_moment_input(event: InputEvent) -> void:
 	if not moment.visible:
 		return
-	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
-		if not (event is InputEventScreenTouch and event.pressed):
-			return
-	if Time.get_ticks_msec() - _moment_opened_msec < 350:
+	var pressed := false
+	var is_click := false
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			is_click = true
+			pressed = mb.pressed
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		is_click = true
+		pressed = touch.pressed
+	if not is_click:
 		return
-	_dismiss_moment()
+	get_viewport().set_input_as_handled()
+	if pressed:
+		if Time.get_ticks_msec() - _moment_opened_msec >= 350:
+			_moment_armed = true
+		return
+	if _moment_armed:
+		_moment_armed = false
+		_dismiss_moment()
 
 
 func _dismiss_moment() -> void:
@@ -450,6 +468,7 @@ func _dismiss_moment() -> void:
 func _hide_moment() -> void:
 	_moment_token += 1
 	_moment_mode = ""
+	_moment_armed = false
 	if _moment_spark:
 		_moment_spark.emitting = false
 	moment.visible = false
