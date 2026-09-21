@@ -74,7 +74,7 @@ func _ready() -> void:
 	_fx.add_child(_water)
 
 	_pot_fx = Node2D.new()
-	_pot_fx.z_index = 12
+	_pot_fx.z_index = 6
 	add_child(_pot_fx)
 	_salt_burst = _make_salt_particles(true)
 	_salt_twinkle = _make_salt_particles(false)
@@ -124,11 +124,11 @@ func _place_fx() -> void:
 	_fx.position = Vector2(size.x * 0.117, size.y * 0.48)
 	if _pot_fx:
 		_pot_fx.position = Vector2(size.x * 0.312, size.y * 0.405)
-		var rad := minf(size.x, size.y) * 0.09
+		var rad := minf(size.x, size.y) * 0.125
 		if _salt_twinkle:
 			_salt_twinkle.emission_sphere_radius = rad
 		if _salt_burst:
-			_salt_burst.emission_sphere_radius = rad * 0.45
+			_salt_burst.emission_sphere_radius = rad * 0.55
 
 
 func _hint(text: String) -> void:
@@ -542,8 +542,8 @@ func _tick_salt_orbit(delta: float) -> void:
 	if not _salt_sparking or _orbit_stars.is_empty():
 		return
 	_orbit_t += delta
-	var rx := minf(size.x, size.y) * 0.088
-	var ry := rx * 0.52
+	var rx := minf(size.x, size.y) * 0.125
+	var ry := rx * 0.58
 	var n := _orbit_stars.size()
 	for i in n:
 		var s: Sprite2D = _orbit_stars[i]
@@ -633,6 +633,18 @@ func _refresh_visuals() -> void:
 		Art.sprite(_overlays, ART["knife"], 64.0, 57.5, 17.5, 19.0, false, false)
 
 
+func _end_salt_sparkle() -> void:
+	_salt_sparking = false
+	if _salt_burst:
+		_salt_burst.emitting = false
+	if _salt_twinkle:
+		_salt_twinkle.emitting = false
+	for s in _orbit_stars:
+		if is_instance_valid(s):
+			s.queue_free()
+	_orbit_stars.clear()
+
+
 func _check_done() -> void:
 	if _done:
 		return
@@ -640,7 +652,8 @@ func _check_done() -> void:
 		_done = true
 		_refresh_visuals()
 		GameState.say("しおん", "月あかりポタージュ、できたよ。")
-		await get_tree().create_timer(0.8).timeout
+		await get_tree().create_timer(1.5).timeout
 		if not is_inside_tree():
 			return
+		_end_salt_sparkle()
 		GameState.present_dish()
