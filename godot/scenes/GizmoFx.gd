@@ -3,6 +3,9 @@ extends Control
 
 var busy := false
 var _spot: Dictionary = {}
+var _circle_tex: Texture2D
+var _square_tex: Texture2D
+var _tri_tex: Texture2D
 
 const STAGE := Vector2(1280.0, 720.0)
 const CLOCK_FACE_POS := Vector2(241, 12)
@@ -10,10 +13,13 @@ const CLOCK_HUB := Vector2(331, 110)
 const CLOCK_RAD := 78.0
 const WELL := Vector2(627, 446)
 const CAVE_MOUTH := Vector2(1126, 280)
+const TEX := 64.0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	clip_contents = false
+	z_as_relative = false
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	layout_mode = 1
 
@@ -109,7 +115,7 @@ func _clear() -> void:
 func _world() -> Node2D:
 	_clear()
 	var world := Node2D.new()
-	world.z_index = 8
+	world.z_index = 20
 	var host := get_parent() as Control
 	var stage := host.size if host != null and host.size.x > 8.0 else size
 	if stage.x < 8.0:
@@ -146,85 +152,162 @@ func _pause(world: Node, sec: float) -> bool:
 	return _ok(world)
 
 
-func _disc(world: Node2D, pos: Vector2, r: float, color: Color, z := 4) -> Polygon2D:
-	var p := Polygon2D.new()
-	var pts := PackedVector2Array()
-	for i in 18:
-		var a := TAU * float(i) / 18.0
-		pts.append(Vector2(cos(a), sin(a)) * r)
-	p.polygon = pts
-	p.color = color
-	p.position = pos
-	p.z_index = z
-	world.add_child(p)
-	return p
+func _tex_circle() -> Texture2D:
+	if _circle_tex:
+		return _circle_tex
+	var n := int(TEX)
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var c := Vector2((n - 1) * 0.5, (n - 1) * 0.5)
+	var r := float(n) * 0.5 - 0.6
+	for y in n:
+		for x in n:
+			if Vector2(float(x), float(y)).distance_to(c) <= r:
+				img.set_pixel(x, y, Color.WHITE)
+	_circle_tex = ImageTexture.create_from_image(img)
+	return _circle_tex
 
 
-func _box(world: Node2D, pos: Vector2, size: Vector2, color: Color, z := 4) -> Polygon2D:
-	var p := Polygon2D.new()
-	var hx := size.x * 0.5
-	var hy := size.y * 0.5
-	p.polygon = PackedVector2Array([
-		Vector2(-hx, -hy), Vector2(hx, -hy), Vector2(hx, hy), Vector2(-hx, hy)
-	])
-	p.color = color
-	p.position = pos
-	p.z_index = z
-	world.add_child(p)
-	return p
+func _tex_square() -> Texture2D:
+	if _square_tex:
+		return _square_tex
+	var img := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	_square_tex = ImageTexture.create_from_image(img)
+	return _square_tex
 
 
-func _tri(world: Node2D, pos: Vector2, size: Vector2, color: Color, z := 4) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = PackedVector2Array([
-		Vector2(0.0, -size.y), Vector2(size.x * 0.5, 0.0), Vector2(-size.x * 0.5, 0.0)
-	])
-	p.color = color
-	p.position = pos
-	p.z_index = z
-	world.add_child(p)
-	return p
+func _tex_tri() -> Texture2D:
+	if _tri_tex:
+		return _tri_tex
+	var n := int(TEX)
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var a := Vector2(float(n) * 0.5, 1.0)
+	var b := Vector2(float(n) - 1.0, float(n) - 1.0)
+	var c := Vector2(1.0, float(n) - 1.0)
+	var den := (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y)
+	for y in n:
+		for x in n:
+			var p := Vector2(float(x), float(y))
+			var u := ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) / den
+			var v := ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) / den
+			var w := 1.0 - u - v
+			if u >= 0.0 and v >= 0.0 and w >= 0.0:
+				img.set_pixel(x, y, Color.WHITE)
+	_tri_tex = ImageTexture.create_from_image(img)
+	return _tri_tex
 
 
-func _word(world: Node2D, pos: Vector2, text: String, color: Color, px := 22) -> Label:
+func _blob(world: Node2D, tex: Texture2D, pos: Vector2, px: Vector2, color: Color, z: int) -> Node2D:
+	var hold := Node2D.new()
+	hold.position = pos
+	hold.z_index = z
+	hold.modulate = color
+	var s := Sprite2D.new()
+	s.texture = tex
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	s.centered = true
+	var tw := float(tex.get_width())
+	var th := float(tex.get_height())
+	if tw > 1.0 and th > 1.0:
+		s.scale = Vector2(px.x / tw, px.y / th)
+	hold.add_child(s)
+	world.add_child(hold)
+	return hold
+
+
+func _disc(world: Node2D, pos: Vector2, r: float, color: Color, z := 4) -> Node2D:
+	return _blob(world, _tex_circle(), pos, Vector2(r * 2.0, r * 2.0), color, z)
+
+
+func _box(world: Node2D, pos: Vector2, size: Vector2, color: Color, z := 4) -> Node2D:
+	return _blob(world, _tex_square(), pos, size, color, z)
+
+
+func _tri(world: Node2D, pos: Vector2, size: Vector2, color: Color, z := 4) -> Node2D:
+	var hold := _blob(world, _tex_tri(), pos, size, color, z)
+	var spr := hold.get_child(0) as Sprite2D
+	if spr:
+		spr.offset = Vector2(0.0, TEX * 0.5)
+	return hold
+
+
+func _word(world: Node2D, pos: Vector2, text: String, color: Color, px := 52) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_font_size_override("font_size", px)
+	l.add_theme_color_override("font_outline_color", Color(0.05, 0.07, 0.12, 0.92))
+	l.add_theme_constant_override("outline_size", 8)
 	if Art.font:
 		l.add_theme_font_override("font", Art.font)
-	l.position = pos
-	l.z_index = 7
+	l.position = pos + Vector2(-40, -22)
+	l.z_index = 16
 	world.add_child(l)
 	return l
 
 
-func _puff(world: Node2D, pos: Vector2, color: Color, n := 12, life := 0.45, vel := 52.0, grav := Vector2(0, 36), dir := Vector2(0, -1), spread := 180.0) -> void:
+func _spray(world: Node2D, pos: Vector2, color: Color, n := 14, rad := 150.0) -> void:
+	if not _ok(world):
+		return
+	var origin := world.to_global(pos)
+	for i in n:
+		var s := Sprite2D.new()
+		s.texture = load("res://assets/art/sparkle.png")
+		s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		s.centered = true
+		s.modulate = color
+		s.scale = Vector2(6.2, 6.2)
+		s.z_index = 30
+		s.z_as_relative = false
+		add_child(s)
+		s.global_position = origin
+		var a := TAU * float(i) / float(n)
+		var dest := origin + Vector2(cos(a), sin(a)) * rad
+		var tw := create_tween()
+		tw.tween_property(s, "global_position", dest, 0.62).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(s, "modulate:a", 0.0, 0.62)
+		tw.parallel().tween_property(s, "scale", Vector2(1.4, 1.4), 0.62)
+
+
+func _puff(world: Node2D, pos: Vector2, color: Color, n := 16, life := 0.55, vel := 90.0, grav := Vector2(0, 40), dir := Vector2(0, -1), spread := 180.0) -> void:
 	if not _ok(world):
 		return
 	var p := CPUParticles2D.new()
-	p.z_index = 6
-	p.position = pos
+	p.z_index = 28
+	p.z_as_relative = false
 	p.emitting = false
 	p.one_shot = true
-	p.amount = n
+	p.amount = maxi(n, 16)
 	p.lifetime = life
-	p.explosiveness = 0.9
+	p.explosiveness = 0.88
 	p.texture = load("res://assets/art/sparkle.png")
 	p.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	p.direction = dir
 	p.spread = spread
 	p.gravity = grav
-	p.initial_velocity_min = vel * 0.35
-	p.initial_velocity_max = vel
-	p.scale_amount_min = 0.14
-	p.scale_amount_max = 0.4
+	p.initial_velocity_min = vel * 0.45
+	p.initial_velocity_max = vel * 1.35
+	p.scale_amount_min = 1.35
+	p.scale_amount_max = 2.8
 	p.color = color
-	world.add_child(p)
+	add_child(p)
+	p.global_position = world.to_global(pos)
 	p.restart()
 	p.emitting = true
 	p.finished.connect(p.queue_free)
+
+
+func _begin(color: Color = Art.GOLD) -> Node2D:
+	var world := _world()
+	if _ok(world):
+		var hub := _hub()
+		_ripple(world, hub, color, 36.0)
+		_spray(world, hub, color)
+		_puff(world, hub, color, 20, 0.55, 110.0)
+	return world
 
 
 func _spr_fit(world: Node2D, path: String, pos: Vector2, target_h: float) -> Sprite2D:
@@ -249,11 +332,11 @@ func _spr(world: Node2D, path: String, pos: Vector2, sc: float) -> Sprite2D:
 	return s
 
 
-func _ripple(world: Node2D, pos: Vector2, color: Color, start_r := 16.0) -> void:
+func _ripple(world: Node2D, pos: Vector2, color: Color, start_r := 36.0) -> void:
 	var ring := _disc(world, pos, start_r, color, 5)
-	ring.modulate.a = 0.7
+	ring.modulate.a = minf(ring.modulate.a, 0.75)
 	var tw := create_tween()
-	tw.tween_property(ring, "scale", Vector2(3.4, 3.4), 0.7).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(ring, "scale", Vector2(3.6, 3.6), 0.7).set_trans(Tween.TRANS_QUAD)
 	tw.parallel().tween_property(ring, "modulate:a", 0.0, 0.7)
 
 
@@ -351,19 +434,19 @@ func _hand(world: Node2D, sc: float, degrees: float) -> Sprite2D:
 # --- kitchen -----------------------------------------------------------------
 
 func _play_lamp() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var glow := _disc(world, hub, 22.0, Color(0.91, 0.77, 0.42, 0.22), 3)
+	var glow := _disc(world, hub, 70.0, Color(0.91, 0.77, 0.42, 0.55), 3)
 	glow.scale = Vector2(0.4, 0.4)
 	var grow := create_tween()
 	grow.tween_property(glow, "scale", Vector2(2.2, 2.2), 0.55).set_trans(Tween.TRANS_SINE)
-	grow.parallel().tween_property(glow, "color:a", 0.55, 0.55)
+	grow.parallel().tween_property(glow, "modulate:a", 0.8, 0.55)
 	_puff(world, hub, Art.GOLD, 10, 0.4, 36.0)
 	if not await _pause(world, 0.5):
 		return
-	var drip := _disc(world, hub + Vector2(0, 18), 7.0, Art.GOLD, 5)
+	var drip := _disc(world, hub + Vector2(0, 18), 24.0, Art.GOLD, 5)
 	var fall := create_tween()
 	fall.tween_property(drip, "position:y", hub.y + 92.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	fall.parallel().tween_property(drip, "scale", Vector2(0.6, 1.3), 0.55)
@@ -376,7 +459,7 @@ func _play_lamp() -> void:
 
 
 func _play_sink() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub() + Vector2(8, -8)
@@ -386,7 +469,7 @@ func _play_sink() -> void:
 	_puff(world, hub + Vector2(10, 6), Color(0.55, 0.78, 1.0, 1), 12, 0.4, 58.0, Vector2(0, 90), Vector2(0, -1), 40.0)
 	if not await _pause(world, 0.35):
 		return
-	var ice := _box(world, hub + Vector2(6, 18), Vector2(18, 18), Color(0.78, 0.92, 1.0, 0.95), 6)
+	var ice := _box(world, hub + Vector2(6, 18), Vector2(52, 52), Color(0.78, 0.92, 1.0, 0.95), 6)
 	ice.rotation_degrees = 45.0
 	ice.scale = Vector2(0.2, 0.2)
 	var pop := create_tween()
@@ -403,14 +486,14 @@ func _play_sink() -> void:
 
 
 func _play_shelf() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var jars: Array[Polygon2D] = []
-	var cols := [Color(0.85, 0.8, 0.7, 0.85), Color(0.7, 0.55, 0.4, 0.85), Color(0.91, 0.77, 0.42, 0.95)]
+	var jars: Array[Node2D] = []
+	var cols := [Color(0.85, 0.8, 0.7, 0.92), Color(0.7, 0.55, 0.4, 0.92), Color(0.91, 0.77, 0.42, 0.98)]
 	for i in 3:
-		var j := _box(world, hub + Vector2(float(i - 1) * 36.0, 4.0), Vector2(18, 28), cols[i], 5)
+		var j := _box(world, hub + Vector2(float(i - 1) * 56.0, 4.0), Vector2(36, 54), cols[i], 5)
 		jars.append(j)
 	var base: Array[float] = []
 	for j in jars:
@@ -447,15 +530,15 @@ func _play_shelf() -> void:
 
 
 func _play_floor_crystal() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	_ripple(world, hub, Color(0.85, 0.92, 1.0, 0.55), 14.0)
+	_ripple(world, hub, Color(0.85, 0.92, 1.0, 0.7), 32.0)
 	_puff(world, hub, Art.SALT, 14, 0.5, 40.0)
 	if not await _pause(world, 0.45):
 		return
-	var star := _disc(world, Vector2(920, 70), 8.0, Art.GOLD, 6)
+	var star := _disc(world, Vector2(920, 70), 24.0, Art.GOLD, 6)
 	star.scale = Vector2(0.2, 0.2)
 	var tw := create_tween()
 	tw.tween_property(star, "scale", Vector2(1.8, 1.8), 0.28).set_trans(Tween.TRANS_BACK)
@@ -465,14 +548,14 @@ func _play_floor_crystal() -> void:
 
 
 func _play_wall_stars() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var bits: Array[Polygon2D] = []
+	var bits: Array[Node2D] = []
 	for i in 5:
 		var a := TAU * float(i) / 5.0
-		var p := _disc(world, hub + Vector2(cos(a), sin(a)) * 48.0, 5.0, Art.GOLD, 5)
+		var p := _disc(world, hub + Vector2(cos(a), sin(a)) * 80.0, 16.0, Art.GOLD, 5)
 		bits.append(p)
 	var gather := create_tween()
 	for p in bits:
@@ -481,7 +564,7 @@ func _play_wall_stars() -> void:
 	if not _ok(world):
 		return
 	_puff(world, hub, Art.SALT, 16, 0.5, 44.0)
-	var flash := _disc(world, hub, 28.0, Color(1, 1, 1, 0.55), 6)
+	var flash := _disc(world, hub, 64.0, Color(1, 1, 1, 0.7), 6)
 	var fade := create_tween()
 	fade.tween_property(flash, "modulate:a", 0.0, 0.35)
 	fade.parallel().tween_property(flash, "scale", Vector2(1.8, 1.8), 0.35)
@@ -489,11 +572,11 @@ func _play_wall_stars() -> void:
 
 
 func _play_table() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var board := _box(world, hub, Vector2(92, 48), Color(0.55, 0.38, 0.22, 0.0), 5)
+	var board := _box(world, hub, Vector2(168, 88), Color(0.55, 0.38, 0.22, 0.0), 5)
 	board.modulate.a = 0.0
 	var pop := create_tween()
 	pop.tween_property(board, "modulate:a", 0.92, 0.18)
@@ -509,11 +592,11 @@ func _play_table() -> void:
 
 
 func _play_bench() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var luna := _spr_fit(world, "res://assets/art/luna-idle.png", hub + Vector2(0, 10), 96.0)
+	var luna := _spr_fit(world, "res://assets/art/luna-idle.png", hub + Vector2(0, 10), 140.0)
 	if luna.texture:
 		var atlas := AtlasTexture.new()
 		atlas.atlas = luna.texture
@@ -521,7 +604,7 @@ func _play_bench() -> void:
 		luna.texture = atlas
 		var th := float(atlas.get_height())
 		if th > 1.0:
-			luna.scale = Vector2.ONE * (96.0 / th)
+			luna.scale = Vector2.ONE * (140.0 / th)
 	luna.modulate = Color(1, 1, 1, 0.0)
 	var in_tw := create_tween()
 	in_tw.tween_property(luna, "modulate:a", 0.85, 0.2)
@@ -543,11 +626,11 @@ func _play_bench() -> void:
 
 
 func _play_pot() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var lid := _disc(world, hub + Vector2(0, -36), 28.0, Color(0.18, 0.2, 0.28, 0.92), 5)
+	var lid := _disc(world, hub + Vector2(0, -36), 42.0, Color(0.18, 0.2, 0.28, 0.92), 5)
 	lid.scale = Vector2(1.0, 0.42)
 	var rattle := create_tween()
 	rattle.tween_property(lid, "rotation_degrees", -14.0, 0.1)
@@ -564,7 +647,7 @@ func _play_pot() -> void:
 
 
 func _play_empty_salt() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
@@ -581,12 +664,12 @@ func _play_empty_salt() -> void:
 	await back.finished
 	if not _ok(world):
 		return
-	_puff(world, hub + Vector2(0, 16), Art.SALT, 4, 0.3, 16.0)
+	_puff(world, hub + Vector2(0, 16), Art.SALT, 12, 0.4, 36.0)
 	await _pause(world, 0.3)
 
 
 func _play_memo() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
@@ -607,7 +690,7 @@ func _play_memo() -> void:
 # --- star road ---------------------------------------------------------------
 
 func _play_clouds() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
@@ -619,11 +702,11 @@ func _play_clouds() -> void:
 
 
 func _play_near_stars() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var star := _disc(world, hub, 10.0, Art.GOLD, 6)
+	var star := _disc(world, hub, 32.0, Art.GOLD, 6)
 	_puff(world, hub, Art.GOLD, 8, 0.35, 22.0)
 	var reach := create_tween()
 	reach.tween_property(star, "position", Vector2(420, 430), 0.55).set_trans(Tween.TRANS_QUAD)
@@ -640,12 +723,12 @@ func _play_near_stars() -> void:
 
 
 func _play_meteor() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var start := Vector2(70, 40)
-	var star := _disc(world, start, 11.0, Art.GOLD, 6)
-	var tail := _box(world, start, Vector2(90, 8), Color(0.91, 0.77, 0.42, 0.55), 5)
+	var star := _disc(world, start, 32.0, Art.GOLD, 6)
+	var tail := _box(world, start, Vector2(200, 22), Color(0.91, 0.77, 0.42, 0.85), 5)
 	tail.rotation_degrees = 28.0
 	var fly := create_tween()
 	fly.tween_property(star, "position", Vector2(520, 250), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -661,23 +744,23 @@ func _play_meteor() -> void:
 
 
 func _play_footprints() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
 	var dest := Vector2(1000, 200)
-	var paws: Array[Polygon2D] = []
+	var paws: Array[Node2D] = []
 	for i in 4:
 		var t := float(i + 1) / 4.0
 		var pos := hub.lerp(dest, t)
-		var paw := _disc(world, pos, 11.0, Color(0.45, 0.28, 0.16, 0.0), 5)
+		var paw := _disc(world, pos, 28.0, Color(0.45, 0.28, 0.16, 0.0), 5)
 		paw.scale = Vector2(1.0, 0.72)
 		paws.append(paw)
 	for paw in paws:
 		if not _ok(world):
 			return
 		var tw := create_tween()
-		tw.tween_property(paw, "color:a", 0.9, 0.12)
+		tw.tween_property(paw, "modulate:a", 0.9, 0.12)
 		_puff(world, paw.position, Art.GOLD, 6, 0.3, 18.0)
 		await tw.finished
 		if not await _pause(world, 0.12):
@@ -686,7 +769,7 @@ func _play_footprints() -> void:
 
 
 func _play_road() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
@@ -700,12 +783,12 @@ func _play_road() -> void:
 # --- moon field --------------------------------------------------------------
 
 func _play_furrows() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var r := _spot_rect()
 	var start := Vector2(r.position.x + 20.0, r.position.y + r.size.y * 0.45)
-	var dust := _disc(world, start, 6.0, Art.GOLD, 5)
+	var dust := _disc(world, start, 22.0, Art.GOLD, 5)
 	var run := create_tween()
 	run.tween_property(dust, "position", Vector2(r.end.x - 24.0, start.y + 18.0), 0.85).set_trans(Tween.TRANS_SINE)
 	_puff(world, start, Art.GOLD, 8, 0.9, 18.0, Vector2(0, 20), Vector2(1, 0.15), 20.0)
@@ -717,7 +800,7 @@ func _play_furrows() -> void:
 
 
 func _play_hills() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
@@ -729,11 +812,11 @@ func _play_hills() -> void:
 
 
 func _play_rocks() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var rock := _disc(world, hub, 26.0, Color(0.62, 0.64, 0.68, 0.92), 5)
+	var rock := _disc(world, hub, 64.0, Color(0.62, 0.64, 0.68, 0.98), 5)
 	rock.scale = Vector2(1.15, 0.75)
 	var lift := create_tween()
 	lift.tween_property(rock, "position:y", hub.y - 48.0, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -755,15 +838,15 @@ func _play_rocks() -> void:
 
 
 func _play_little_crater() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
 	_puff(world, hub, Color(0.7, 0.68, 0.62), 12, 0.4, 32.0, Vector2(0, 40), Vector2(0, -1), 70.0)
 	if not await _pause(world, 0.2):
 		return
-	var L := _tri(world, hub + Vector2(-8, -4), Vector2(14, 22), Color(0.93, 0.93, 0.95, 0.95), 6)
-	var R := _tri(world, hub + Vector2(8, -4), Vector2(14, 22), Color(0.93, 0.93, 0.95, 0.95), 6)
+	var L := _tri(world, hub + Vector2(-16, -4), Vector2(32, 52), Color(0.93, 0.93, 0.95, 0.98), 6)
+	var R := _tri(world, hub + Vector2(16, -4), Vector2(32, 52), Color(0.93, 0.93, 0.95, 0.98), 6)
 	L.scale = Vector2(1, 0.1)
 	R.scale = Vector2(1, 0.1)
 	var peek := create_tween()
@@ -780,12 +863,12 @@ func _play_little_crater() -> void:
 
 
 func _play_earth() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var planet := _disc(world, hub, 22.0, Color(0.28, 0.48, 0.78, 0.95), 5)
-	var land := _disc(world, hub + Vector2(-4, 2), 8.0, Color(0.35, 0.62, 0.38, 0.95), 6)
+	var planet := _disc(world, hub, 56.0, Color(0.28, 0.48, 0.78, 0.98), 5)
+	var land := _disc(world, hub + Vector2(-8, 6), 20.0, Color(0.35, 0.62, 0.38, 0.98), 6)
 	var shrink := create_tween()
 	shrink.tween_property(planet, "scale", Vector2(0.18, 0.18), 0.55).set_trans(Tween.TRANS_QUAD)
 	shrink.parallel().tween_property(land, "scale", Vector2(0.18, 0.18), 0.55)
@@ -796,29 +879,29 @@ func _play_earth() -> void:
 	var grow := create_tween()
 	grow.tween_property(planet, "scale", Vector2(1.0, 1.0), 0.35).set_trans(Tween.TRANS_BACK)
 	grow.parallel().tween_property(land, "scale", Vector2(1.0, 1.0), 0.35)
-	grow.parallel().tween_property(land, "position", hub + Vector2(-4, 2), 0.35)
+	grow.parallel().tween_property(land, "position", hub + Vector2(-8, 6), 0.35)
 	await grow.finished
 	await _pause(world, 0.2)
 
 
 func _play_crater() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var dark := _disc(world, hub, 40.0, Color(0.05, 0.06, 0.1, 0.0), 5)
+	var dark := _disc(world, hub, 80.0, Color(0.05, 0.06, 0.1, 0.0), 5)
 	var peek := create_tween()
-	peek.tween_property(dark, "color:a", 0.72, 0.22)
+	peek.tween_property(dark, "modulate:a", 0.78, 0.22)
 	peek.parallel().tween_property(dark, "scale", Vector2(1.15, 0.7), 0.22)
 	await peek.finished
 	if not await _pause(world, 0.35):
 		return
 	var fade := create_tween()
-	fade.tween_property(dark, "color:a", 0.0, 0.2)
+	fade.tween_property(dark, "modulate:a", 0.0, 0.2)
 	await fade.finished
 	if not _ok(world):
 		return
-	var mote := _disc(world, hub, 7.0, Art.GOLD, 6)
+	var mote := _disc(world, hub, 22.0, Art.GOLD, 6)
 	var fly := create_tween()
 	fly.tween_property(mote, "position", CAVE_MOUTH, 0.55).set_trans(Tween.TRANS_QUAD)
 	_puff(world, hub, Art.GOLD, 8, 0.4, 22.0)
@@ -832,11 +915,11 @@ func _play_crater() -> void:
 # --- moon cave ---------------------------------------------------------------
 
 func _play_stalactite() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := Vector2(_hub().x, 36.0)
-	var drip := _disc(world, hub, 6.0, Art.SALT, 6)
+	var drip := _disc(world, hub, 22.0, Art.SALT, 6)
 	var fall := create_tween()
 	fall.tween_property(drip, "position:y", 210.0, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await fall.finished
@@ -844,20 +927,20 @@ func _play_stalactite() -> void:
 		return
 	drip.visible = false
 	_puff(world, Vector2(hub.x, 210.0), Art.SALT, 12, 0.45, 32.0)
-	var flash := _disc(world, Vector2(hub.x, 210.0), 16.0, Color(1, 1, 1, 0.5), 6)
+	var flash := _disc(world, Vector2(hub.x, 210.0), 28.0, Color(1, 1, 1, 0.7), 6)
 	var fade := create_tween()
 	fade.tween_property(flash, "modulate:a", 0.0, 0.3)
 	await fade.finished
 
 
 func _play_echo() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
 	var words: Array[Label] = []
 	for i in 3:
-		var l := _word(world, hub + Vector2(-10, float(i) * 8.0), "しお", Art.SALT, 26 - i * 4)
+		var l := _word(world, hub + Vector2(-10, float(i) * 8.0), "しお", Art.SALT, 56 - i * 8)
 		l.modulate.a = 0.0
 		words.append(l)
 	for i in words.size():
@@ -877,9 +960,16 @@ func _play_echo() -> void:
 
 
 func _play_cave_clock() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
+	var face := Sprite2D.new()
+	face.texture = load("res://assets/art/clock-face.png")
+	face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	face.centered = false
+	face.position = CLOCK_FACE_POS
+	face.modulate = Color(0.72, 0.82, 1.0, 0.92)
+	world.add_child(face)
 	var hour := _hand(world, (CLOCK_RAD * 0.58) / 115.0, 228.0)
 	var minute := _hand(world, (CLOCK_RAD * 0.88) / 115.0, 48.0)
 	var twitch := create_tween()
@@ -894,21 +984,21 @@ func _play_cave_clock() -> void:
 	await freeze.finished
 	if not _ok(world):
 		return
-	_ripple(world, WELL, Color(0.7, 0.85, 1.0, 0.5), 22.0)
+	_ripple(world, WELL, Color(0.7, 0.85, 1.0, 0.65), 36.0)
 	if not await _pause(world, 0.25):
 		return
-	_ripple(world, WELL, Color(0.7, 0.85, 1.0, 0.35), 16.0)
+	_ripple(world, WELL, Color(0.7, 0.85, 1.0, 0.5), 28.0)
 	await _pause(world, 0.55)
 
 
 func _play_cave_shelf() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var jars: Array[Polygon2D] = []
+	var jars: Array[Node2D] = []
 	for i in 3:
-		var j := _box(world, hub + Vector2(float(i - 1) * 34.0, 4.0), Vector2(16, 26), Color(0.75, 0.8, 0.9, 0.55), 5)
+		var j := _box(world, hub + Vector2(float(i - 1) * 56.0, 4.0), Vector2(36, 54), Color(0.75, 0.8, 0.9, 0.88), 5)
 		jars.append(j)
 	var ghost := create_tween()
 	for j in jars:
@@ -928,14 +1018,14 @@ func _play_cave_shelf() -> void:
 
 
 func _play_cave_sink() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub() + Vector2(8, -6)
 	_puff(world, hub, Art.SALT, 12, 0.45, 50.0, Vector2(0, 70), Vector2(0, -1), 40.0)
 	if not await _pause(world, 0.4):
 		return
-	var milk := _disc(world, hub, 8.0, Color(0.93, 0.95, 1.0, 0.95), 6)
+	var milk := _disc(world, hub, 28.0, Color(0.93, 0.95, 1.0, 0.98), 6)
 	var fly := create_tween()
 	fly.tween_property(milk, "position", WELL, 0.55).set_trans(Tween.TRANS_QUAD)
 	await fly.finished
@@ -947,11 +1037,11 @@ func _play_cave_sink() -> void:
 
 
 func _play_cave_pot() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var lid := _disc(world, hub + Vector2(0, -36), 28.0, Color(0.18, 0.2, 0.28, 0.9), 5)
+	var lid := _disc(world, hub + Vector2(0, -36), 42.0, Color(0.18, 0.2, 0.28, 0.9), 5)
 	lid.scale = Vector2(1.0, 0.42)
 	var no := create_tween()
 	no.tween_property(lid, "position:x", hub.x + 14.0, 0.12)
@@ -961,7 +1051,7 @@ func _play_cave_pot() -> void:
 	await no.finished
 	if not _ok(world):
 		return
-	var spark := _disc(world, hub, 6.0, Art.GOLD, 6)
+	var spark := _disc(world, hub, 22.0, Art.GOLD, 6)
 	var point := create_tween()
 	point.tween_property(spark, "position", Vector2(160, 640), 0.45)
 	point.parallel().tween_property(spark, "modulate:a", 0.0, 0.45)
@@ -969,11 +1059,11 @@ func _play_cave_pot() -> void:
 
 
 func _play_cave_window() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var start := _hub()
-	var moon := _disc(world, start, 28.0, Color(0.93, 0.9, 0.78, 0.92), 6)
+	var moon := _disc(world, start, 60.0, Color(0.93, 0.9, 0.78, 0.96), 6)
 	var drop := create_tween()
 	drop.tween_property(moon, "position", WELL + Vector2(0, -40), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await drop.finished
@@ -989,11 +1079,11 @@ func _play_cave_window() -> void:
 
 
 func _play_cave_lamp() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var glow := _disc(world, hub, 26.0, Color(0.91, 0.77, 0.42, 0.4), 4)
+	var glow := _disc(world, hub, 64.0, Color(0.91, 0.77, 0.42, 0.7), 4)
 	var smear := create_tween()
 	smear.tween_property(glow, "scale", Vector2(2.4, 1.15), 0.45).set_trans(Tween.TRANS_SINE)
 	smear.parallel().tween_property(glow, "modulate:a", 0.55, 0.45)
@@ -1007,11 +1097,11 @@ func _play_cave_lamp() -> void:
 
 
 func _play_cave_jar() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var jar := _box(world, hub, Vector2(36, 48), Color(0.7, 0.8, 0.95, 0.55), 5)
+	var jar := _box(world, hub, Vector2(72, 92), Color(0.7, 0.8, 0.95, 0.88), 5)
 	var ghost := create_tween()
 	ghost.tween_property(jar, "modulate:a", 0.12, 0.5)
 	ghost.parallel().tween_property(jar, "scale", Vector2(1.08, 1.08), 0.5)
@@ -1023,11 +1113,11 @@ func _play_cave_jar() -> void:
 
 
 func _play_cave_crystals() -> void:
-	var world := _world()
+	var world := _begin()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	_ripple(world, hub, Color(0.8, 0.9, 1.0, 0.55), 14.0)
+	_ripple(world, hub, Color(0.8, 0.9, 1.0, 0.7), 32.0)
 	_puff(world, hub, Art.SALT, 12, 0.4, 28.0)
 	if not await _pause(world, 0.4):
 		return
