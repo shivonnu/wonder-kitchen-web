@@ -14,7 +14,6 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	layout_mode = 1
-	clip_contents = true
 
 
 func play(kind: String) -> void:
