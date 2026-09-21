@@ -63,16 +63,10 @@ static func _bob(r: TextureRect, half := 1.25) -> void:
 	tw.set_trans(Tween.TRANS_SINE)
 	tw.set_ease(Tween.EASE_IN_OUT)
 	var amp := 4.0
-	tw.tween_method(func(y: float) -> void:
-		if is_instance_valid(r):
-			r.offset_top = y
-			r.offset_bottom = y
-	, 0.0, amp, half)
-	tw.tween_method(func(y: float) -> void:
-		if is_instance_valid(r):
-			r.offset_top = y
-			r.offset_bottom = y
-	, amp, 0.0, half)
+	tw.tween_property(r, "offset_top", amp, half)
+	tw.parallel().tween_property(r, "offset_bottom", amp, half)
+	tw.tween_property(r, "offset_top", 0.0, half)
+	tw.parallel().tween_property(r, "offset_bottom", 0.0, half)
 
 
 static func hotspot(parent: Control, label: String, x: float, y: float, w: float, h: float, cb: Callable, spark_host: Node = null) -> Button:
@@ -131,12 +125,7 @@ static func spark_at(host: Node, global_pos: Vector2) -> void:
 	p.global_position = global_pos
 	p.restart()
 	p.emitting = true
-	var tree := host.get_tree()
-	if tree:
-		tree.create_timer(0.7).timeout.connect(func() -> void:
-			if is_instance_valid(p):
-				p.queue_free()
-		)
+	p.finished.connect(p.queue_free)
 
 
 static func backdrop(parent: Control, path: String) -> TextureRect:
