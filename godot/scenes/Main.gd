@@ -16,16 +16,40 @@ extends Control
 @onready var body: Label = $Root/Dialogue/DialogueCol/Body
 @onready var fade: ColorRect = $Fade
 @onready var hand_label: Label = $Root/Hud/HudCol/TopRow/Hand
+@onready var moment: Control = $Moment
+
+const FANFARE_ICONS := {
+	"potato": "res://assets/art/potato.png",
+	"onion": "res://assets/art/onion.png",
+	"moonMilk": "res://assets/art/icon-milk.png",
+	"starSalt": "res://assets/art/icon-salt.png",
+}
+
+var _moment_dim: ColorRect
+var _moment_card: PanelContainer
+var _moment_col: VBoxContainer
+var _moment_kicker: Label
+var _moment_icon: TextureRect
+var _moment_title: Label
+var _moment_hint: Label
+var _moment_spark: CPUParticles2D
+var _moment_token := 0
+var _moment_mode := ""
+var _moment_opened_msec := 0
+
 
 func _ready() -> void:
 	Art.boot()
 	_apply_theme()
+	_build_moment()
 	GameState.scene_changed.connect(_on_scene)
 	GameState.inventory_changed.connect(_refresh_hud)
 	GameState.flags_changed.connect(_refresh_hud)
 	GameState.dialogue_changed.connect(_refresh_dialogue)
 	GameState.fading_changed.connect(_on_fade)
 	GameState.hand_changed.connect(_refresh_hud)
+	GameState.item_got.connect(_on_item_got)
+	GameState.dish_ready.connect(_on_dish_ready)
 	back_btn.pressed.connect(_on_back)
 	cook_btn.pressed.connect(_on_cook)
 	quit_btn.pressed.connect(func() -> void: GameState.reset())
@@ -85,6 +109,8 @@ func _show_scene(scene_id: String) -> void:
 	screen.anchor_right = 1
 	screen.anchor_bottom = 1
 	host.add_child(screen)
+	if _moment_mode != "dish":
+		_hide_moment()
 	var show_hud := scene_id != "title" and scene_id != "ending"
 	hud.visible = show_hud
 	dialogue.visible = show_hud
@@ -269,3 +295,164 @@ func _return_chrome_to_stack() -> void:
 	dialogue.layout_mode = 2
 	hud.size_flags_vertical = Control.SIZE_FILL
 	dialogue.size_flags_vertical = Control.SIZE_FILL
+
+
+func _build_moment() -> void:
+	_moment_dim = ColorRect.new()
+	_moment_dim.color = Color(0.027, 0.043, 0.11, 0.72)
+	_moment_dim.layout_mode = 1
+	_moment_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_moment_dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_moment_dim.gui_input.connect(_on_moment_input)
+	moment.add_child(_moment_dim)
+
+	_moment_spark = CPUParticles2D.new()
+	_moment_spark.emitting = false
+	_moment_spark.amount = 28
+	_moment_spark.lifetime = 1.1
+	_moment_spark.explosiveness = 0.35
+	_moment_spark.direction = Vector2(0, -1)
+	_moment_spark.spread = 180
+	_moment_spark.initial_velocity_min = 20
+	_moment_spark.initial_velocity_max = 90
+	_moment_spark.gravity = Vector2(0, 28)
+	_moment_spark.color = Art.GOLD
+	_moment_spark.z_index = 2
+	moment.add_child(_moment_spark)
+
+	_moment_card = PanelContainer.new()
+	_moment_card.layout_mode = 1
+	_moment_card.anchor_left = 0.5
+	_moment_card.anchor_top = 0.5
+	_moment_card.anchor_right = 0.5
+	_moment_card.anchor_bottom = 0.5
+	_moment_card.add_theme_stylebox_override("panel", Art.moment_style())
+	_moment_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	moment.add_child(_moment_card)
+
+	_moment_col = VBoxContainer.new()
+	_moment_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	_moment_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_moment_col.add_theme_constant_override("separation", 10)
+	_moment_card.add_child(_moment_col)
+
+	_moment_kicker = Label.new()
+	_moment_kicker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_moment_kicker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_moment_kicker.add_theme_color_override("font_color", Art.GOLD)
+	_moment_kicker.add_theme_font_size_override("font_size", 15)
+	_moment_col.add_child(_moment_kicker)
+
+	_moment_icon = TextureRect.new()
+	_moment_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_moment_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_moment_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_moment_icon.material = Art.chroma
+	_moment_icon.custom_minimum_size = Vector2(220, 220)
+	_moment_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_moment_col.add_child(_moment_icon)
+
+	_moment_title = Label.new()
+	_moment_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_moment_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_moment_title.add_theme_color_override("font_color", Art.CREAM)
+	_moment_title.add_theme_font_size_override("font_size", 22)
+	_moment_col.add_child(_moment_title)
+
+	_moment_hint = Label.new()
+	_moment_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_moment_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_moment_hint.add_theme_color_override("font_color", Color(0.957, 0.937, 0.894, 0.75))
+	_moment_hint.add_theme_font_size_override("font_size", 13)
+	_moment_col.add_child(_moment_hint)
+
+
+func _on_item_got(id: String) -> void:
+	var path := str(FANFARE_ICONS.get(id, ""))
+	if path == "":
+		return
+	var name := str(Hotspots.ITEM_META.get(id, {}).get("name", id))
+	_open_moment("get", path, "手に入れた！", name, "タップしてつづける", Vector2(280, 240))
+
+
+func _on_dish_ready() -> void:
+	_open_moment(
+		"dish",
+		"res://assets/art/potage-hero.png",
+		"できたよ",
+		"月あかりポタージュ",
+		"タップしてつづける",
+		Vector2(420, 380)
+	)
+
+
+func _open_moment(mode: String, icon_path: String, kicker: String, title: String, hint: String, icon_size: Vector2) -> void:
+	_moment_token += 1
+	var token := _moment_token
+	_moment_mode = mode
+	_moment_opened_msec = Time.get_ticks_msec()
+	_moment_kicker.text = kicker
+	_moment_title.text = title
+	_moment_hint.text = hint
+	_moment_icon.texture = load(icon_path)
+	_moment_icon.custom_minimum_size = icon_size
+	var card_w := 340.0 if mode == "get" else minf(size.x * 0.82, 560.0)
+	var card_h := 420.0 if mode == "get" else minf(size.y * 0.86, 640.0)
+	_moment_card.offset_left = -card_w * 0.5
+	_moment_card.offset_right = card_w * 0.5
+	_moment_card.offset_top = -card_h * 0.5
+	_moment_card.offset_bottom = card_h * 0.5
+	_moment_spark.position = size * 0.5
+	_moment_spark.emitting = false
+	_moment_spark.restart()
+	_moment_spark.emitting = true
+	moment.visible = true
+	moment.mouse_filter = Control.MOUSE_FILTER_STOP
+	_moment_dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_moment_card.pivot_offset = Vector2(card_w, card_h) * 0.5
+	_moment_card.scale = Vector2(0.72, 0.72)
+	var tw := _moment_card.create_tween()
+	tw.set_trans(Tween.TRANS_BACK)
+	tw.set_ease(Tween.EASE_OUT)
+	tw.tween_property(_moment_card, "scale", Vector2(1.06, 1.06), 0.28)
+	tw.tween_property(_moment_card, "scale", Vector2.ONE, 0.16)
+	if mode == "get":
+		await get_tree().create_timer(2.0).timeout
+		if token == _moment_token and _moment_mode == "get" and moment.visible:
+			_hide_moment()
+
+
+func _on_moment_input(event: InputEvent) -> void:
+	if not moment.visible:
+		return
+	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		if not (event is InputEventScreenTouch and event.pressed):
+			return
+	if Time.get_ticks_msec() - _moment_opened_msec < 350:
+		return
+	_dismiss_moment()
+
+
+func _dismiss_moment() -> void:
+	if not moment.visible:
+		return
+	if _moment_mode == "dish":
+		_hide_moment()
+		GameState.go_to(
+			"ending",
+			"しおん",
+			"あったかい……星が、お腹のなかで溶けていく。ありがとう。"
+		)
+		return
+	_hide_moment()
+
+
+func _hide_moment() -> void:
+	_moment_token += 1
+	_moment_mode = ""
+	if _moment_spark:
+		_moment_spark.emitting = false
+	moment.visible = false
+	moment.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _moment_dim:
+		_moment_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE

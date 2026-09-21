@@ -6,6 +6,8 @@ signal flags_changed
 signal dialogue_changed
 signal fading_changed(on: bool)
 signal hand_changed
+signal item_got(id: String)
+signal dish_ready
 
 const SAVE_PATH := "user://hoshishio-save-v1.json"
 const RECIPE: Array[String] = ["memo", "potato", "onion", "moonMilk", "starSalt"]
@@ -200,6 +202,7 @@ func click_hotspot(spot: Dictionary) -> void:
 	var speaker := str(dialogue.get("speaker", "しおん"))
 	var text := str(dialogue.get("text", ""))
 	var picked := false
+	var picked_id := ""
 	for a in actions:
 		match str(a.get("type", "")):
 			"say":
@@ -210,6 +213,7 @@ func click_hotspot(spot: Dictionary) -> void:
 				if item != "" and item not in items:
 					items.append(item)
 					picked = true
+					picked_id = item
 				speaker = str(a.get("speaker", speaker))
 				text = str(a.get("text", text))
 			"flag":
@@ -234,8 +238,14 @@ func click_hotspot(spot: Dictionary) -> void:
 	inventory_changed.emit()
 	flags_changed.emit()
 	persist()
+	if picked and picked_id in ["potato", "onion", "moonMilk", "starSalt"]:
+		item_got.emit(picked_id)
 	if next_scene != "":
 		call_deferred("go_to", next_scene)
+
+
+func present_dish() -> void:
+	dish_ready.emit()
 
 
 func _next_step_hint() -> String:
