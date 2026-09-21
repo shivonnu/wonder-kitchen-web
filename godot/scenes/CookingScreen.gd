@@ -637,8 +637,10 @@ func _end_salt_sparkle() -> void:
 	_salt_sparking = false
 	if _salt_burst:
 		_salt_burst.emitting = false
+		_salt_burst.visible = false
 	if _salt_twinkle:
 		_salt_twinkle.emitting = false
+		_salt_twinkle.visible = false
 	for s in _orbit_stars:
 		if is_instance_valid(s):
 			s.queue_free()
