@@ -428,16 +428,20 @@ func _open_moment(mode: String, icon_path: String, kicker: String, title: String
 func _on_moment_input(event: InputEvent) -> void:
 	if not moment.visible:
 		return
-	var is_mouse := event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT
-	var is_touch := event is InputEventScreenTouch
-	if not is_mouse and not is_touch:
+	var pressed := false
+	var is_click := false
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			is_click = true
+			pressed = mb.pressed
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		is_click = true
+		pressed = touch.pressed
+	if not is_click:
 		return
 	get_viewport().set_input_as_handled()
-	var pressed := false
-	if is_mouse:
-		pressed = (event as InputEventMouseButton).pressed
-	else:
-		pressed = (event as InputEventScreenTouch).pressed
 	if pressed:
 		if Time.get_ticks_msec() - _moment_opened_msec >= 350:
 			_moment_armed = true
