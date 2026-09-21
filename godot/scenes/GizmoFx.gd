@@ -227,6 +227,16 @@ func _puff(world: Node2D, pos: Vector2, color: Color, n := 12, life := 0.45, vel
 	p.finished.connect(p.queue_free)
 
 
+func _spr_fit(world: Node2D, path: String, pos: Vector2, target_h: float) -> Sprite2D:
+	var s := _spr(world, path, pos, 1.0)
+	if s.texture:
+		var th := float(s.texture.get_height())
+		if th > 1.0:
+			var sc := target_h / th
+			s.scale = Vector2(sc, sc)
+	return s
+
+
 func _spr(world: Node2D, path: String, pos: Vector2, sc: float) -> Sprite2D:
 	var s := Sprite2D.new()
 	s.texture = load(path)
@@ -503,12 +513,15 @@ func _play_bench() -> void:
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var luna := _spr(world, "res://assets/art/luna-idle.png", hub + Vector2(0, 6), 0.55)
+	var luna := _spr_fit(world, "res://assets/art/luna-idle.png", hub + Vector2(0, 10), 96.0)
 	if luna.texture:
 		var atlas := AtlasTexture.new()
 		atlas.atlas = luna.texture
 		atlas.region = Rect2(0, 0, luna.texture.get_width() * 0.5, luna.texture.get_height())
 		luna.texture = atlas
+		var th := float(atlas.get_height())
+		if th > 1.0:
+			luna.scale = Vector2.ONE * (96.0 / th)
 	luna.modulate = Color(1, 1, 1, 0.0)
 	var in_tw := create_tween()
 	in_tw.tween_property(luna, "modulate:a", 0.85, 0.2)
@@ -555,7 +568,7 @@ func _play_empty_salt() -> void:
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var jar := _spr(world, "res://assets/art/icon-salt.png", hub, 0.7)
+	var jar := _spr_fit(world, "res://assets/art/icon-salt.png", hub, 72.0)
 	jar.modulate.a = 0.0
 	var inn := create_tween()
 	inn.tween_property(jar, "modulate:a", 1.0, 0.12)
@@ -577,12 +590,13 @@ func _play_memo() -> void:
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var paper := _spr(world, "res://assets/art/icon-memo.png", hub, 0.85)
+	var paper := _spr_fit(world, "res://assets/art/icon-memo.png", hub, 78.0)
 	var flip := create_tween()
+	var sx := paper.scale.x
 	flip.tween_property(paper, "scale:x", 0.05, 0.16)
-	flip.tween_property(paper, "scale:x", 0.85, 0.16)
+	flip.tween_property(paper, "scale:x", sx, 0.16)
 	flip.tween_property(paper, "scale:x", 0.05, 0.14)
-	flip.tween_property(paper, "scale:x", 0.85, 0.16)
+	flip.tween_property(paper, "scale:x", sx, 0.16)
 	await flip.finished
 	if not _ok(world):
 		return
