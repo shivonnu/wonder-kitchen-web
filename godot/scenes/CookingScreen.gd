@@ -106,7 +106,7 @@ func _ready() -> void:
 
 
 func _place_fx() -> void:
-	_fx.position = Vector2(size.x * 0.108, size.y * 0.48)
+	_fx.position = Vector2(size.x * 0.114, size.y * 0.48)
 
 
 func _hint(text: String) -> void:
@@ -488,7 +488,7 @@ func _refresh_visuals() -> void:
 		btn.mouse_filter = Control.MOUSE_FILTER_STOP if on_shelf else Control.MOUSE_FILTER_IGNORE
 
 	if water_on:
-		Art.sprite(_overlays, "res://assets/art/water-stream.png", 7.8, 40.5, 5.2, 22.0, false, false)
+		Art.sprite(_overlays, "res://assets/art/water-stream.png", 8.4, 40.5, 5.2, 22.0, false, false)
 
 	if _done:
 		_add_pot_liquid("res://assets/art/pot-potage.png")
@@ -498,7 +498,7 @@ func _refresh_visuals() -> void:
 		_add_pot_liquid("res://assets/art/pot-water.png")
 
 	if pot_fire:
-		for flame_x in [23.5, 27.2, 30.9, 34.6]:
+		for flame_x in [23.5, 27.2, 30.9]:
 			Art.sprite(_overlays, "res://assets/art/icon-fire.png", flame_x, 47.0, 8.0, 12.5, false, true)
 
 	for id in SHELF:
