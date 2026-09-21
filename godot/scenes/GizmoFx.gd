@@ -6,6 +6,7 @@ var _spot: Dictionary = {}
 var _circle_tex: Texture2D
 var _square_tex: Texture2D
 var _tri_tex: Texture2D
+var _heart_tex: Texture2D
 
 const STAGE := Vector2(1280.0, 720.0)
 const CLOCK_FACE_POS := Vector2(241, 12)
@@ -197,6 +198,26 @@ func _tex_tri() -> Texture2D:
 				img.set_pixel(x, y, Color.WHITE)
 	_tri_tex = ImageTexture.create_from_image(img)
 	return _tri_tex
+
+
+func _tex_heart() -> Texture2D:
+	if _heart_tex:
+		return _heart_tex
+	var n := int(TEX)
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var cx := (n - 1) * 0.5
+	var cy := (n - 1) * 0.42
+	var s := float(n) * 0.28
+	for y in n:
+		for x in n:
+			var px := (float(x) - cx) / s
+			var py := (cy - float(y)) / s
+			var a := px * px + py * py - 1.0
+			if a * a * a - px * px * py * py * py <= 0.0:
+				img.set_pixel(x, y, Color.WHITE)
+	_heart_tex = ImageTexture.create_from_image(img)
+	return _heart_tex
 
 
 func _blob(world: Node2D, tex: Texture2D, pos: Vector2, px: Vector2, color: Color, z: int) -> Node2D:
@@ -434,28 +455,109 @@ func _hand(world: Node2D, sc: float, degrees: float) -> Sprite2D:
 # --- kitchen -----------------------------------------------------------------
 
 func _play_lamp() -> void:
-	var world := _begin()
+	var world := _world()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var glow := _disc(world, hub, 70.0, Color(0.91, 0.77, 0.42, 0.55), 3)
-	glow.scale = Vector2(0.4, 0.4)
+	var glow := _disc(world, hub, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
 	var grow := create_tween()
-	grow.tween_property(glow, "scale", Vector2(2.2, 2.2), 0.55).set_trans(Tween.TRANS_SINE)
-	grow.parallel().tween_property(glow, "modulate:a", 0.8, 0.55)
-	_puff(world, hub, Art.GOLD, 10, 0.4, 36.0)
-	if not await _pause(world, 0.5):
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.4).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.4)
+	if not await _pause(world, 0.18):
 		return
-	var drip := _disc(world, hub + Vector2(0, 18), 24.0, Art.GOLD, 5)
-	var fall := create_tween()
-	fall.tween_property(drip, "position:y", hub.y + 92.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	fall.parallel().tween_property(drip, "scale", Vector2(0.6, 1.3), 0.55)
-	await fall.finished
+
+	var dests: Array[Vector2] = [
+		Vector2(210, 150),
+		Vector2(430, 88),
+		Vector2(640, 170),
+		Vector2(880, 110),
+		Vector2(220, 390),
+		Vector2(540, 330),
+		Vector2(980, 390),
+		Vector2(720, 500),
+	]
+	var kinds := ["circle", "heart", "diamond", "circle", "heart", "diamond", "circle", "heart"]
+	var cols := [
+		Art.SALT,
+		Color(1.0, 0.86, 0.9, 1.0),
+		Art.GOLD,
+		Color(0.86, 0.93, 1.0, 1.0),
+		Art.GOLD,
+		Art.SALT,
+		Color(1.0, 0.92, 0.78, 1.0),
+		Color(0.9, 0.84, 1.0, 1.0),
+	]
+	var chunks: Array[Node2D] = []
+	for i in dests.size():
+		if not _ok(world):
+			return
+		var ch := _salt_dream(world, hub, kinds[i], cols[i])
+		chunks.append(ch)
+		_fly_salt(ch, hub, dests[i], 0.95 + float(i) * 0.03)
+		if i < dests.size() - 1:
+			if not await _pause(world, 0.06):
+				return
+	if not await _pause(world, 1.05):
+		return
+
+	var wrap := create_tween()
+	for ch in chunks:
+		if not _ok(ch):
+			continue
+		var halo := ch.get_node_or_null("halo") as Node2D
+		if halo:
+			wrap.parallel().tween_property(halo, "modulate:a", 0.46, 0.55).set_trans(Tween.TRANS_SINE)
+			wrap.parallel().tween_property(halo, "scale", Vector2(1.0, 1.0), 0.55)
+	var dim := create_tween()
+	dim.tween_property(glow, "modulate:a", 0.12, 0.6)
+	await wrap.finished
 	if not _ok(world):
 		return
-	drip.visible = false
-	_puff(world, Vector2(hub.x, hub.y + 92.0), Art.GOLD, 14, 0.5, 48.0)
-	await _pause(world, 0.35)
+	if not await _pause(world, 2.4):
+		return
+	var fade := create_tween()
+	fade.set_trans(Tween.TRANS_SINE)
+	for ch in chunks:
+		if _ok(ch):
+			fade.parallel().tween_property(ch, "modulate:a", 0.0, 2.0)
+	fade.parallel().tween_property(glow, "modulate:a", 0.0, 2.0)
+	await fade.finished
+
+
+func _salt_dream(world: Node2D, pos: Vector2, kind: String, color: Color) -> Node2D:
+	var hold := Node2D.new()
+	hold.position = pos
+	hold.z_index = 8
+	world.add_child(hold)
+	var halo := _disc(hold, Vector2.ZERO, 30.0, Color(1.0, 0.95, 0.82, 0.0), 0)
+	halo.name = "halo"
+	halo.scale = Vector2(0.22, 0.22)
+	var salt: Node2D
+	match kind:
+		"heart":
+			salt = _blob(hold, _tex_heart(), Vector2.ZERO, Vector2(26, 26), color, 2)
+		"diamond":
+			salt = _box(hold, Vector2.ZERO, Vector2(20, 20), color, 2)
+			var spr := salt.get_child(0) as Sprite2D
+			if spr:
+				spr.rotation_degrees = 45.0
+		_:
+			salt = _disc(hold, Vector2.ZERO, 11.0, color, 2)
+	salt.name = "salt"
+	return hold
+
+
+func _fly_salt(hold: Node2D, start: Vector2, dest: Vector2, dur: float) -> void:
+	var arc := 42.0 + float(randi() % 28)
+	var tw := create_tween()
+	tw.set_trans(Tween.TRANS_CUBIC)
+	tw.set_ease(Tween.EASE_OUT)
+	tw.tween_method(func(t: float) -> void:
+		if not _ok(hold):
+			return
+		hold.position = start.lerp(dest, t) + Vector2(0.0, -sin(t * PI) * arc)
+	, 0.0, 1.0, dur)
 
 
 func _play_sink() -> void:
