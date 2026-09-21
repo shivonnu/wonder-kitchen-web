@@ -71,7 +71,7 @@ func _ready() -> void:
 
 	Art.hotspot(self, "蛇口", 0, 32, 18, 38, _on_faucet)
 	Art.hotspot(self, "お鍋", 18, 26, 18, 28, _on_pot)
-	Art.hotspot(self, "火", 20, 52, 14, 16, _on_fire)
+	Art.hotspot(self, "火", 18, 44, 20, 26, _on_fire)
 	Art.hotspot(self, "まな板", 38, 56, 28, 30, _on_board)
 	Art.hotspot(self, "包丁", 64, 56, 18, 22, _on_knife)
 	Art.hotspot(self, "棚", 0, 3, 26, 26, _on_shelf)
@@ -106,7 +106,7 @@ func _ready() -> void:
 
 
 func _place_fx() -> void:
-	_fx.position = Vector2(size.x * 0.09, size.y * 0.48)
+	_fx.position = Vector2(size.x * 0.108, size.y * 0.48)
 
 
 func _hint(text: String) -> void:
@@ -488,7 +488,7 @@ func _refresh_visuals() -> void:
 		btn.mouse_filter = Control.MOUSE_FILTER_STOP if on_shelf else Control.MOUSE_FILTER_IGNORE
 
 	if water_on:
-		Art.sprite(_overlays, "res://assets/art/water-stream.png", 6.4, 40.5, 5.2, 22.0, false, false)
+		Art.sprite(_overlays, "res://assets/art/water-stream.png", 7.8, 40.5, 5.2, 22.0, false, false)
 
 	if _done:
 		_add_pot_liquid("res://assets/art/pot-potage.png")
@@ -498,7 +498,8 @@ func _refresh_visuals() -> void:
 		_add_pot_liquid("res://assets/art/pot-water.png")
 
 	if pot_fire:
-		Art.sprite(_overlays, "res://assets/art/icon-fire.png", 23.5, 47.0, 8.0, 12.5, false, true)
+		for flame_x in [23.5, 27.2, 30.9, 34.6]:
+			Art.sprite(_overlays, "res://assets/art/icon-fire.png", flame_x, 47.0, 8.0, 12.5, false, true)
 
 	for id in SHELF:
 		if loc.get(id, "") != "shelf":
