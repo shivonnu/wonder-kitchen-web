@@ -2,22 +2,18 @@ class_name GizmoFx
 extends Control
 
 var busy := false
-var _layer: Control
 
-# Kitchen.png 1280x720 clock crop (241,12)-(421,236), hub (331,110).
-const CLOCK_BOX := [18.828, 1.667, 14.0625, 31.111]
-const CLOCK_HUB := Vector2(0.5, 0.4375)
+# kitchen.png is 1280x720 and fills the 16:9 stage.
+const KITCHEN := Vector2(1280.0, 720.0)
+const CLOCK_FACE_POS := Vector2(241, 12)
+const CLOCK_HUB := Vector2(331, 110)
+const CLOCK_RAD := 78.0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	layout_mode = 1
-	_layer = Control.new()
-	_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_layer.layout_mode = 1
-	_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(_layer)
 
 
 func play(kind: String) -> void:
@@ -32,103 +28,110 @@ func play(kind: String) -> void:
 	busy = false
 
 
-func _clear_layer() -> void:
-	if _layer == null:
-		return
-	for c in _layer.get_children():
-		_layer.remove_child(c)
+func _clear() -> void:
+	for c in get_children():
+		remove_child(c)
 		c.free()
 
 
+func _world() -> Node2D:
+	_clear()
+	var world := Node2D.new()
+	world.z_index = 8
+	var host := get_parent() as Control
+	var stage := host.size if host != null and host.size.x > 8.0 else size
+	world.scale = Vector2(stage.x / KITCHEN.x, stage.y / KITCHEN.y)
+	add_child(world)
+	return world
+
+
 func _play_clock() -> void:
-	_clear_layer()
 	Art.boot()
-	var box := Control.new()
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	Art.fill_pct(box, CLOCK_BOX[0], CLOCK_BOX[1], CLOCK_BOX[2], CLOCK_BOX[3])
-	_layer.add_child(box)
-
-	var face := TextureRect.new()
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	face.stretch_mode = TextureRect.STRETCH_SCALE
-	face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	face.texture = load("res://assets/art/clock-face.png")
-	face.layout_mode = 1
-	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	box.add_child(face)
-
-	await get_tree().process_frame
-	if not is_instance_valid(box):
+	var host := get_parent() as Control
+	var tries := 0
+	while host != null and host.size.x < 8.0 and tries < 10:
+		await get_tree().process_frame
+		tries += 1
+	var world := _world()
+	if not is_instance_valid(world):
 		return
 
-	var hub := Vector2(box.size.x * CLOCK_HUB.x, box.size.y * CLOCK_HUB.y)
-	var rad := box.size.x * (78.0 / 180.0)
-	var hour := _make_hand(box, hub, 0.42, -12.0)
-	var minute := _make_hand(box, hub, 0.72, 48.0)
-	var door := _make_sprite(box, "res://assets/art/clock-door.png", Vector2(hub.x, hub.y - rad + 6.0), 0.55)
-	door.offset = Vector2(0, -door.texture.get_height() * 0.45)
+	var face := Sprite2D.new()
+	face.texture = load("res://assets/art/clock-face.png")
+	face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	face.centered = false
+	face.position = CLOCK_FACE_POS
+	world.add_child(face)
+
+	var hour := _hand(world, 0.55, -12.0)
+	var minute := _hand(world, 0.92, 48.0)
+
+	var door := _spr(world, "res://assets/art/clock-door.png", Vector2(CLOCK_HUB.x, CLOCK_HUB.y - CLOCK_RAD + 4.0), 1.15)
+	if door.texture:
+		door.offset = Vector2(0.0, -door.texture.get_height() * 0.45)
 	door.visible = false
-	var bird := _make_sprite(box, "res://assets/art/clock-bird.png", Vector2(hub.x, hub.y - rad + 8.0), 0.42)
+	door.z_index = 3
+
+	var bird := _spr(world, "res://assets/art/clock-bird.png", Vector2(CLOCK_HUB.x + 6.0, CLOCK_HUB.y - CLOCK_RAD + 8.0), 0.55)
 	bird.visible = false
-	bird.z_index = 3
+	bird.z_index = 4
 
 	var spin := create_tween()
 	spin.set_trans(Tween.TRANS_QUAD)
 	spin.set_ease(Tween.EASE_IN)
-	spin.tween_property(minute, "rotation_degrees", minute.rotation_degrees + 1260.0, 1.35)
-	spin.parallel().tween_property(hour, "rotation_degrees", hour.rotation_degrees + 700.0, 1.35)
+	spin.tween_property(minute, "rotation_degrees", minute.rotation_degrees + 1260.0, 1.4)
+	spin.parallel().tween_property(hour, "rotation_degrees", hour.rotation_degrees + 740.0, 1.4)
 	await spin.finished
-	if not is_instance_valid(box):
+	if not is_instance_valid(world):
 		return
 
 	door.visible = true
-	door.rotation_degrees = 0.0
 	var open_tw := create_tween()
-	open_tw.tween_property(door, "rotation_degrees", -78.0, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	open_tw.tween_property(door, "rotation_degrees", -82.0, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await open_tw.finished
-	if not is_instance_valid(box):
+	if not is_instance_valid(world):
 		return
 
 	bird.visible = true
-	bird.position = Vector2(hub.x + 4.0, hub.y - rad + 10.0)
-	bird.scale = Vector2(0.18, 0.18)
+	bird.scale = Vector2(0.22, 0.22)
+	var perch := Vector2(CLOCK_HUB.x + 10.0, CLOCK_HUB.y - CLOCK_RAD - 22.0)
 	var pop := create_tween()
 	pop.set_trans(Tween.TRANS_BACK)
 	pop.set_ease(Tween.EASE_OUT)
-	pop.tween_property(bird, "position", Vector2(hub.x + 10.0, hub.y - rad - 18.0), 0.28)
-	pop.parallel().tween_property(bird, "scale", Vector2(0.42, 0.42), 0.28)
+	pop.tween_property(bird, "position", perch, 0.28)
+	pop.parallel().tween_property(bird, "scale", Vector2(0.62, 0.62), 0.28)
 	await pop.finished
-	if not is_instance_valid(box):
+	if not is_instance_valid(world):
 		return
 
-	Art.spark_at(self, bird.global_position)
+	Art.spark_at(self, bird.to_global(Vector2.ZERO))
 	var bob := create_tween()
-	bob.tween_property(bird, "position:y", bird.position.y - 6.0, 0.12)
-	bob.tween_property(bird, "position:y", bird.position.y + 2.0, 0.14)
+	bob.tween_property(bird, "position:y", perch.y - 8.0, 0.12)
+	bob.tween_property(bird, "position:y", perch.y + 3.0, 0.16)
 	await bob.finished
-	await get_tree().create_timer(0.28).timeout
-	if not is_instance_valid(box):
+	await get_tree().create_timer(0.32).timeout
+	if not is_instance_valid(world):
 		return
 
+	var hole := Vector2(CLOCK_HUB.x + 6.0, CLOCK_HUB.y - CLOCK_RAD + 8.0)
 	var back := create_tween()
-	back.tween_property(bird, "position", Vector2(hub.x + 4.0, hub.y - rad + 10.0), 0.16)
-	back.parallel().tween_property(bird, "scale", Vector2(0.16, 0.16), 0.16)
+	back.tween_property(bird, "position", hole, 0.16)
+	back.parallel().tween_property(bird, "scale", Vector2(0.2, 0.2), 0.16)
 	back.tween_property(door, "rotation_degrees", 0.0, 0.12)
 	await back.finished
-	if not is_instance_valid(box):
+	if not is_instance_valid(world):
 		return
 
 	bird.visible = false
 	door.visible = false
 	hour.rotation_degrees = -12.0
 	minute.rotation_degrees = 48.0
-	await get_tree().create_timer(0.2).timeout
-	_clear_layer()
+	await get_tree().create_timer(0.22).timeout
+	_clear()
 
 
-func _make_hand(parent: Control, hub: Vector2, length_scale: float, degrees: float) -> Sprite2D:
-	var s := _make_sprite(parent, "res://assets/art/clock-hand.png", hub, length_scale)
+func _hand(world: Node2D, sc: float, degrees: float) -> Sprite2D:
+	var s := _spr(world, "res://assets/art/clock-hand.png", CLOCK_HUB, sc)
 	if s.texture:
 		s.offset = Vector2(0.0, -s.texture.get_height() * 0.40)
 	s.rotation_degrees = degrees
@@ -136,7 +139,7 @@ func _make_hand(parent: Control, hub: Vector2, length_scale: float, degrees: flo
 	return s
 
 
-func _make_sprite(parent: Control, path: String, pos: Vector2, sc: float) -> Sprite2D:
+func _spr(world: Node2D, path: String, pos: Vector2, sc: float) -> Sprite2D:
 	var s := Sprite2D.new()
 	s.texture = load(path)
 	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -144,5 +147,5 @@ func _make_sprite(parent: Control, path: String, pos: Vector2, sc: float) -> Spr
 	s.centered = true
 	s.position = pos
 	s.scale = Vector2(sc, sc)
-	parent.add_child(s)
+	world.add_child(s)
 	return s
