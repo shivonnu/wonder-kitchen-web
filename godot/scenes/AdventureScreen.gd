@@ -167,7 +167,7 @@ func _click_spot(spot: Dictionary) -> void:
 	if fx != "" and _gizmo != null:
 		if _gizmo.busy:
 			return
-		await _gizmo.play(fx)
+		await _gizmo.play(fx, spot)
 		if not is_inside_tree():
 			return
 	GameState.click_hotspot(spot)
