@@ -48,6 +48,30 @@ const SCENES := {
 		"art": "kitchen",
 		"hotspots": [
 			{
+				"id": "table",
+				"label": "木のテーブル",
+				"x": 34, "y": 50, "w": 32, "h": 26,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "まな板は、料理をはじめてから出てくるよ。いまはメモと、おなかの準備。"},
+				],
+			},
+			{
+				"id": "wallStars",
+				"label": "壁の星くず",
+				"x": 38, "y": 8, "w": 14, "h": 18,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "壁に落ちた星くず。なめると、ほんの少し塩味。"},
+				],
+			},
+			{
+				"id": "bench",
+				"label": "石のベンチ",
+				"x": 64, "y": 42, "w": 16, "h": 16,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "ルナがよくここで、足をぶらぶらしてた。"},
+				],
+			},
+			{
 				"id": "shion",
 				"label": "しおん",
 				"x": 32, "y": 54, "w": 8, "h": 18,
@@ -190,6 +214,30 @@ const SCENES := {
 		"art": "starRoad",
 		"hotspots": [
 			{
+				"id": "clouds",
+				"label": "夜の雲",
+				"x": 32, "y": 10, "w": 28, "h": 18,
+				"actions": [
+					{"type": "say", "speaker": "雲", "text": "わた雲のなかに、塩の粒がまぶしてある。"},
+				],
+			},
+			{
+				"id": "nearStars",
+				"label": "ちかい星",
+				"x": 6, "y": 30, "w": 16, "h": 18,
+				"actions": [
+					{"type": "say", "speaker": "星", "text": "てをのばすと、つめたい。まだ遠い。"},
+				],
+			},
+			{
+				"id": "road",
+				"label": "星の道",
+				"x": 20, "y": 30, "w": 40, "h": 42,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "踏むたび、靴の裏がきらきらする。ルナの足跡をたどろう。"},
+				],
+			},
+			{
 				"id": "meteor",
 				"label": "ながれ星",
 				"x": 4, "y": 4, "w": 28, "h": 28,
@@ -219,6 +267,38 @@ const SCENES := {
 		"title": "月のうら側の畑",
 		"art": "moonField",
 		"hotspots": [
+			{
+				"id": "furrows",
+				"label": "星いもの畑",
+				"x": 2, "y": 38, "w": 34, "h": 28,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "畝のあいだに、星くずがまいてある。いもは左、たまねぎは手前だよ。"},
+				],
+			},
+			{
+				"id": "hills",
+				"label": "遠い丘",
+				"x": 18, "y": 22, "w": 36, "h": 16,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "丘の向こうは、もっと塩っぽい風。"},
+				],
+			},
+			{
+				"id": "rocks",
+				"label": "月の石",
+				"x": 56, "y": 58, "w": 22, "h": 18,
+				"actions": [
+					{"type": "say", "speaker": "石", "text": "軽い。持ち帰ることもできるけど、今夜はいらないかな。"},
+				],
+			},
+			{
+				"id": "littleCrater",
+				"label": "ちいさな穴",
+				"x": 26, "y": 64, "w": 12, "h": 12,
+				"actions": [
+					{"type": "say", "speaker": "穴", "text": "うさぎが掘ったあと、かも。"},
+				],
+			},
 			{
 				"id": "potato",
 				"label": "星いも",
@@ -302,6 +382,70 @@ const SCENES := {
 				"label": "畑へ戻る",
 				"x": 4, "y": 78, "w": 22, "h": 14,
 				"actions": [{"type": "go", "scene": "moonField"}],
+			},
+			{
+				"id": "caveClock",
+				"label": "星座時計",
+				"x": 18, "y": 6, "w": 16, "h": 22,
+				"actions": [
+					{"type": "say", "speaker": "時計", "text": "針は、井戸の水面と同じ速さで止まっている。"},
+				],
+			},
+			{
+				"id": "caveShelf",
+				"label": "調味料棚",
+				"x": 1, "y": 8, "w": 22, "h": 22,
+				"actions": [
+					{"type": "say", "speaker": "棚", "text": "ここにある壺は飾り。星しおはキッチンだよ。"},
+				],
+			},
+			{
+				"id": "caveSink",
+				"label": "流し",
+				"x": 0, "y": 40, "w": 18, "h": 32,
+				"actions": [
+					{"type": "say", "speaker": "流し", "text": "星くずの水。飲むのは、井戸の月牛乳のほうがいいかな。"},
+				],
+			},
+			{
+				"id": "cavePot",
+				"label": "お鍋",
+				"x": 18, "y": 32, "w": 16, "h": 28,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "ここでは煮ないよ。材料をそろえて、キッチンに帰ろう。"},
+				],
+			},
+			{
+				"id": "caveWindow",
+				"label": "丸い窓",
+				"x": 52, "y": 4, "w": 28, "h": 22,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "月が、井戸の縁に落ちているみたい。"},
+				],
+			},
+			{
+				"id": "caveLamp",
+				"label": "塩のランプ",
+				"x": 86, "y": 8, "w": 12, "h": 24,
+				"actions": [
+					{"type": "say", "speaker": "ランプ", "text": "結晶が、井戸の蒸気で少しにじんでいる。"},
+				],
+			},
+			{
+				"id": "caveJar",
+				"label": "まぼろしの壺",
+				"x": 80, "y": 32, "w": 12, "h": 20,
+				"actions": [
+					{"type": "say", "speaker": "しおん", "text": "星しおは、こっちの壺じゃなくてキッチンだよ。"},
+				],
+			},
+			{
+				"id": "caveCrystals",
+				"label": "床の結晶",
+				"x": 4, "y": 68, "w": 18, "h": 16,
+				"actions": [
+					{"type": "say", "speaker": "結晶", "text": "チリン。月の井戸が、遠くで答える。"},
+				],
 			},
 		],
 	},

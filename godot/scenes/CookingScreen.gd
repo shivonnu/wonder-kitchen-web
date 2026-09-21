@@ -617,7 +617,7 @@ func _refresh_visuals() -> void:
 
 	if pot_fire:
 		for flame_x in [23.5, 27.2, 30.9]:
-			Art.sprite(_overlays, "res://assets/art/icon-fire.png", flame_x, 47.0, 8.0, 12.5, false, true)
+			Art.sprite(_overlays, "res://assets/art/icon-fire.png", flame_x, 47.0, 8.0, 12.5, false, true, 0.55)
 
 	for id in SHELF:
 		if loc.get(id, "") != "shelf":
