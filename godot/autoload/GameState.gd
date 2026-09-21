@@ -203,6 +203,8 @@ func click_hotspot(spot: Dictionary) -> void:
 	var text := str(dialogue.get("text", ""))
 	var picked := false
 	var picked_id := ""
+	var items_changed := false
+	var flags_changed_now := false
 	for a in actions:
 		match str(a.get("type", "")):
 			"say":
@@ -214,12 +216,14 @@ func click_hotspot(spot: Dictionary) -> void:
 					items.append(item)
 					picked = true
 					picked_id = item
+					items_changed = true
 				speaker = str(a.get("speaker", speaker))
 				text = str(a.get("text", text))
 			"flag":
 				var flag := str(a.get("flag", ""))
 				if flag != "" and flag not in flags:
 					flags.append(flag)
+					flags_changed_now = true
 				speaker = str(a.get("speaker", speaker))
 				text = str(a.get("text", text))
 			"go":
@@ -235,8 +239,10 @@ func click_hotspot(spot: Dictionary) -> void:
 
 	dialogue = {"speaker": speaker, "text": text}
 	dialogue_changed.emit()
-	inventory_changed.emit()
-	flags_changed.emit()
+	if items_changed:
+		inventory_changed.emit()
+	if flags_changed_now:
+		flags_changed.emit()
 	persist()
 	if picked and picked_id in ["potato", "onion", "moonMilk", "starSalt"]:
 		item_got.emit(picked_id)

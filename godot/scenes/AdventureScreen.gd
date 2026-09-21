@@ -1,11 +1,39 @@
 class_name AdventureScreen
 extends Control
 
+const MISS_LINES := {
+	"kitchen": [
+		"そこは、ふつうの夜の空気。時計、窓、ルナ、壺……気になったらタップ。",
+		"指先で、星くずがちょっと光った。別の場所も触ってみて。",
+		"テーブルのまわりを、もうすこし探してみて。",
+	],
+	"starRoad": [
+		"雲のあいだを、ながれ星がすり抜けていった。",
+		"足跡か、光の扉をたどると、月のうら側だよ。",
+		"踏むたび、靴の裏がきらきらする。",
+	],
+	"moonField": [
+		"月の土は、ふわっと軽い。いも、たまねぎ、洞窟を探してみて。",
+		"風が、塩の匂いを運んできた。",
+		"丘の向こうまで、今夜は歩かなくていいよ。",
+	],
+	"moonCave": [
+		"井戸と、鍾乳石と、こだま。触ると、何か言うよ。",
+		"洞窟の空気が、牛乳みたいに白い。",
+		"星しおは、ここじゃなくてキッチンの壺だよ。",
+	],
+}
+
 var _art: Control
 var _spots: Control
+var _fx: Node2D
 var _walker: TextureRect
 var _rebuild_queued := false
 var _backdrop_scene := ""
+var _overlay_sig := ""
+var _miss_i := 0
+var _last_miss_msec := 0
+
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -21,6 +49,9 @@ func _ready() -> void:
 	_spots.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_spots.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(_spots)
+	_fx = Node2D.new()
+	_fx.z_index = 40
+	add_child(_fx)
 	GameState.flags_changed.connect(refresh)
 	GameState.inventory_changed.connect(refresh)
 	refresh()
@@ -51,15 +82,19 @@ func _rebuild() -> void:
 		_clear_later_children(_art, 0)
 		_clear_later_children(_spots, 0)
 		_backdrop_scene = ""
+		_overlay_sig = ""
 		return
 	if _backdrop_scene != scene_id:
 		_clear_later_children(_art, 0)
 		Art.backdrop(_art, Hotspots.ART[scene_id])
 		_backdrop_scene = scene_id
-	else:
+		_overlay_sig = ""
+	var sig := _current_overlay_sig(scene_id)
+	if _overlay_sig != sig:
 		_clear_later_children(_art, 1)
+		_draw_overlays(scene_id)
+		_overlay_sig = sig
 	_clear_later_children(_spots, 0)
-	_draw_overlays(scene_id)
 	for spot in Hotspots.visible(scene_id):
 		var captured: Dictionary = spot
 		Art.hotspot(
@@ -69,8 +104,20 @@ func _rebuild() -> void:
 			float(spot["y"]),
 			float(spot["w"]),
 			float(spot["h"]),
-			func() -> void: GameState.click_hotspot(captured)
+			func() -> void: GameState.click_hotspot(captured),
+			_fx
 		)
+
+
+func _current_overlay_sig(scene_id: String) -> String:
+	return "|".join([
+		scene_id,
+		str(GameState.has_flag("lunaLeft")),
+		str(GameState.has_item("potato")),
+		str(GameState.has_item("onion")),
+		str(GameState.has_item("moonMilk")),
+		str(GameState.can_cook()),
+	])
 
 
 func _draw_overlays(scene_id: String) -> void:
@@ -81,8 +128,6 @@ func _draw_overlays(scene_id: String) -> void:
 				Art.sprite(_art, "res://assets/art/luna-idle.png", 46, 52, 10, 18, true, true)
 			else:
 				Art.sprite(_art, "res://assets/art/icon-memo.png", 48, 56, 8, 14, false, false)
-			if GameState.has_flag("saltTaken"):
-				Art.sprite(_art, "res://assets/art/salt-jar-empty.png", 80, 32, 12, 20)
 			if GameState.can_cook():
 				var glow := Label.new()
 				glow.text = "つくれる！"
@@ -124,3 +169,37 @@ func _walk_road(r: TextureRect) -> void:
 	tw.tween_method(func(t: float) -> void:
 		Art.fill_pct(r, lerpf(48, 66, t), lerpf(42, 22, t), 10, 18)
 	, 0.0, 1.0, 1.2)
+
+
+func _gui_input(event: InputEvent) -> void:
+	if GameState.fading:
+		return
+	var released := false
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+			released = true
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed:
+			released = true
+	if not released:
+		return
+	if _over_hotspot():
+		return
+	var now := Time.get_ticks_msec()
+	if now - _last_miss_msec < 380:
+		return
+	_last_miss_msec = now
+	Art.spark_at(_fx, get_global_mouse_position())
+	var lines: Array = MISS_LINES.get(GameState.scene, MISS_LINES["kitchen"])
+	GameState.say("しおん", str(lines[_miss_i % lines.size()]))
+	_miss_i += 1
+
+
+func _over_hotspot() -> bool:
+	var pos := get_global_mouse_position()
+	for c in _spots.get_children():
+		if c is Control and (c as Control).get_global_rect().has_point(pos):
+			return true
+	return false
