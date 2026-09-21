@@ -274,7 +274,6 @@ func _on_board() -> void:
 					_hint("こんにゃくみたいに、やわらかく切れた。")
 				else:
 					_hint("塩の香りがふわっとした。涙は出ないみたい。")
-				_refresh_visuals()
 				_chop()
 				return
 		else:
@@ -410,11 +409,16 @@ func _status_hint() -> String:
 func _chop() -> void:
 	if _board_item == null:
 		return
-	var tw := _board_item.create_tween()
-	tw.tween_property(_board_item, "scale", Vector2(1.05, 0.72), 0.08)
-	tw.tween_property(_board_item, "scale", Vector2(1, 1), 0.1)
-	tw.tween_property(_board_item, "scale", Vector2(1.05, 0.72), 0.08)
-	tw.tween_property(_board_item, "scale", Vector2(1, 1), 0.1)
+	var item := _board_item
+	var tw := item.create_tween()
+	tw.tween_property(item, "scale", Vector2(1.05, 0.72), 0.08)
+	tw.tween_property(item, "scale", Vector2(1, 1), 0.1)
+	tw.tween_property(item, "scale", Vector2(1.05, 0.72), 0.08)
+	tw.tween_property(item, "scale", Vector2(1, 1), 0.1)
+	await tw.finished
+	if not is_inside_tree():
+		return
+	_refresh_visuals()
 
 
 func _process(_delta: float) -> void:
@@ -438,6 +442,20 @@ func _gui_input(event: InputEvent) -> void:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and GameState.hand != "":
 			_hint("まな板、お鍋、棚のどれかをタップして置いてね。")
+
+
+func _add_pot_liquid(path: String) -> void:
+	Art.boot()
+	var r := TextureRect.new()
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	r.material = Art.chroma
+	r.texture = load(path)
+	r.layout_mode = 1
+	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_overlays.add_child(r)
 
 
 func _update_held_tex() -> void:
@@ -473,11 +491,11 @@ func _refresh_visuals() -> void:
 		Art.sprite(_overlays, "res://assets/art/water-stream.png", 6.4, 40.5, 5.2, 22.0, false, false)
 
 	if _done:
-		Art.sprite(_overlays, "res://assets/art/pot-potage.png", 17.6, 25.2, 18.4, 26.5, false, false)
+		_add_pot_liquid("res://assets/art/pot-potage.png")
 	elif _pot_has_food():
-		Art.sprite(_overlays, "res://assets/art/pot-soup.png", 17.6, 25.2, 18.4, 26.5, false, false)
+		_add_pot_liquid("res://assets/art/pot-soup.png")
 	elif pot_water:
-		Art.sprite(_overlays, "res://assets/art/pot-water.png", 17.6, 25.2, 18.4, 26.5, false, false)
+		_add_pot_liquid("res://assets/art/pot-water.png")
 
 	if pot_fire:
 		Art.sprite(_overlays, "res://assets/art/icon-fire.png", 23.5, 47.0, 8.0, 12.5, false, true)
