@@ -51,6 +51,7 @@ const SCENES := {
 				"id": "table",
 				"label": "木のテーブル",
 				"x": 56, "y": 62, "w": 16, "h": 16,
+				"fx": "table",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "まな板は、料理をはじめてから出てくるよ。いまはメモと、おなかの準備。"},
 				],
@@ -59,6 +60,7 @@ const SCENES := {
 				"id": "wallStars",
 				"label": "壁の星くず",
 				"x": 38, "y": 8, "w": 14, "h": 18,
+				"fx": "wallStars",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "壁に落ちた星くず。なめると、ほんの少し塩味。"},
 				],
@@ -67,6 +69,7 @@ const SCENES := {
 				"id": "bench",
 				"label": "石のベンチ",
 				"x": 64, "y": 42, "w": 16, "h": 16,
+				"fx": "bench",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "ルナがよくここで、足をぶらぶらしてた。"},
 				],
@@ -105,6 +108,7 @@ const SCENES := {
 				"label": "テーブルのメモ",
 				"x": 46, "y": 56, "w": 10, "h": 16,
 				"showWhen": ["lunaLeft"],
+				"fx": "memoSpot",
 				"actions": [
 					{
 						"type": "say",
@@ -147,6 +151,7 @@ const SCENES := {
 				"label": "空の壺",
 				"x": 80, "y": 32, "w": 12, "h": 20,
 				"showWhen": ["saltTaken"],
+				"fx": "emptySalt",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "星しおはもうカバンのなか。大切にね。"},
 				],
@@ -155,6 +160,7 @@ const SCENES := {
 				"id": "pot",
 				"label": "お鍋",
 				"x": 18, "y": 32, "w": 16, "h": 28,
+				"fx": "pot",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "まだ何も入っていない。材料がそろったら、ここで煮よう。"},
 				],
@@ -172,6 +178,7 @@ const SCENES := {
 				"id": "lamp",
 				"label": "塩のランプ",
 				"x": 86, "y": 8, "w": 12, "h": 24,
+				"fx": "lamp",
 				"actions": [
 					{"type": "say", "speaker": "ランプ", "text": "結晶がきらきらと、金の光をこぼしている。"},
 				],
@@ -180,6 +187,7 @@ const SCENES := {
 				"id": "sink",
 				"label": "流し",
 				"x": 0, "y": 40, "w": 18, "h": 32,
+				"fx": "sink",
 				"actions": [
 					{"type": "say", "speaker": "流し", "text": "水のかわりに、うすい星くずがさらさら流れている。つめたい。"},
 				],
@@ -188,6 +196,7 @@ const SCENES := {
 				"id": "shelf",
 				"label": "調味料棚",
 				"x": 1, "y": 8, "w": 22, "h": 22,
+				"fx": "shelf",
 				"actions": [
 					{"type": "say", "speaker": "棚", "text": "こしょうも砂糖もない。この島の味つけは、ほとんど星しおだけ。"},
 				],
@@ -196,6 +205,7 @@ const SCENES := {
 				"id": "floorCrystal",
 				"label": "床の結晶",
 				"x": 82, "y": 68, "w": 14, "h": 16,
+				"fx": "floorCrystal",
 				"actions": [
 					{"type": "say", "speaker": "結晶", "text": "チリン。踏むたび、遠い星の音がする。"},
 				],
@@ -218,6 +228,7 @@ const SCENES := {
 				"id": "clouds",
 				"label": "夜の雲",
 				"x": 32, "y": 10, "w": 28, "h": 18,
+				"fx": "clouds",
 				"actions": [
 					{"type": "say", "speaker": "雲", "text": "わた雲のなかに、塩の粒がまぶしてある。"},
 				],
@@ -226,6 +237,7 @@ const SCENES := {
 				"id": "nearStars",
 				"label": "ちかい星",
 				"x": 6, "y": 30, "w": 16, "h": 18,
+				"fx": "nearStars",
 				"actions": [
 					{"type": "say", "speaker": "星", "text": "てをのばすと、つめたい。まだ遠い。"},
 				],
@@ -234,6 +246,7 @@ const SCENES := {
 				"id": "road",
 				"label": "星の道",
 				"x": 20, "y": 30, "w": 40, "h": 42,
+				"fx": "road",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "踏むたび、靴の裏がきらきらする。ルナの足跡をたどろう。"},
 				],
@@ -242,12 +255,14 @@ const SCENES := {
 				"id": "meteor",
 				"label": "ながれ星",
 				"x": 4, "y": 4, "w": 28, "h": 28,
+				"fx": "meteor",
 				"actions": [{"type": "say", "speaker": "ながれ星", "text": "きゅいん。願いごとは塩味だと叶いやすい、らしい。"}],
 			},
 			{
 				"id": "footprints",
 				"label": "ルナの足跡",
 				"x": 28, "y": 52, "w": 28, "h": 28,
+				"fx": "footprints",
 				"actions": [{"type": "say", "speaker": "足跡", "text": "うさぎの足跡が、月のうら側へ続いている。"}],
 			},
 			{
@@ -272,6 +287,7 @@ const SCENES := {
 				"id": "furrows",
 				"label": "星いもの畑",
 				"x": 2, "y": 38, "w": 34, "h": 28,
+				"fx": "furrows",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "畝のあいだに、星くずがまいてある。いもは左、たまねぎは手前だよ。"},
 				],
@@ -280,6 +296,7 @@ const SCENES := {
 				"id": "hills",
 				"label": "遠い丘",
 				"x": 18, "y": 22, "w": 36, "h": 16,
+				"fx": "hills",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "丘の向こうは、もっと塩っぽい風。"},
 				],
@@ -288,6 +305,7 @@ const SCENES := {
 				"id": "rocks",
 				"label": "月の石",
 				"x": 56, "y": 58, "w": 22, "h": 18,
+				"fx": "rocks",
 				"actions": [
 					{"type": "say", "speaker": "石", "text": "軽い。持ち帰ることもできるけど、今夜はいらないかな。"},
 				],
@@ -296,6 +314,7 @@ const SCENES := {
 				"id": "littleCrater",
 				"label": "ちいさな穴",
 				"x": 26, "y": 64, "w": 12, "h": 12,
+				"fx": "littleCrater",
 				"actions": [
 					{"type": "say", "speaker": "穴", "text": "うさぎが掘ったあと、かも。"},
 				],
@@ -322,12 +341,14 @@ const SCENES := {
 				"id": "earth",
 				"label": "遠くの青い星",
 				"x": 80, "y": 4, "w": 12, "h": 14,
+				"fx": "earth",
 				"actions": [{"type": "say", "speaker": "しおん", "text": "あれが地球。ここでは豆つぶみたい。"}],
 			},
 			{
 				"id": "crater",
 				"label": "クレーター",
 				"x": 42, "y": 52, "w": 22, "h": 24,
+				"fx": "crater",
 				"actions": [{"type": "say", "speaker": "クレーター", "text": "なかはからっぽ。牛乳はもっと奥の洞窟だよ。"}],
 			},
 			{
@@ -370,12 +391,14 @@ const SCENES := {
 				"id": "stalactite",
 				"label": "塩の鍾乳石",
 				"x": 8, "y": 0, "w": 50, "h": 22,
+				"fx": "stalactite",
 				"actions": [{"type": "say", "speaker": "鍾乳石", "text": "なめると、ほんの少しだけしょっぱい。"}],
 			},
 			{
 				"id": "echo",
 				"label": "こだま",
 				"x": 78, "y": 18, "w": 18, "h": 24,
+				"fx": "echo",
 				"actions": [{"type": "say", "speaker": "こだま", "text": "……しお。……しお。"}],
 			},
 			{
@@ -388,6 +411,7 @@ const SCENES := {
 				"id": "caveClock",
 				"label": "星座時計",
 				"x": 18, "y": 6, "w": 16, "h": 22,
+				"fx": "caveClock",
 				"actions": [
 					{"type": "say", "speaker": "時計", "text": "針は、井戸の水面と同じ速さで止まっている。"},
 				],
@@ -396,6 +420,7 @@ const SCENES := {
 				"id": "caveShelf",
 				"label": "調味料棚",
 				"x": 1, "y": 8, "w": 22, "h": 22,
+				"fx": "caveShelf",
 				"actions": [
 					{"type": "say", "speaker": "棚", "text": "ここにある壺は飾り。星しおはキッチンだよ。"},
 				],
@@ -404,6 +429,7 @@ const SCENES := {
 				"id": "caveSink",
 				"label": "流し",
 				"x": 0, "y": 40, "w": 18, "h": 32,
+				"fx": "caveSink",
 				"actions": [
 					{"type": "say", "speaker": "流し", "text": "星くずの水。飲むのは、井戸の月牛乳のほうがいいかな。"},
 				],
@@ -412,6 +438,7 @@ const SCENES := {
 				"id": "cavePot",
 				"label": "お鍋",
 				"x": 18, "y": 32, "w": 16, "h": 28,
+				"fx": "cavePot",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "ここでは煮ないよ。材料をそろえて、キッチンに帰ろう。"},
 				],
@@ -420,6 +447,7 @@ const SCENES := {
 				"id": "caveWindow",
 				"label": "丸い窓",
 				"x": 52, "y": 4, "w": 28, "h": 22,
+				"fx": "caveWindow",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "月が、井戸の縁に落ちているみたい。"},
 				],
@@ -428,6 +456,7 @@ const SCENES := {
 				"id": "caveLamp",
 				"label": "塩のランプ",
 				"x": 86, "y": 8, "w": 12, "h": 24,
+				"fx": "caveLamp",
 				"actions": [
 					{"type": "say", "speaker": "ランプ", "text": "結晶が、井戸の蒸気で少しにじんでいる。"},
 				],
@@ -436,6 +465,7 @@ const SCENES := {
 				"id": "caveJar",
 				"label": "まぼろしの壺",
 				"x": 80, "y": 32, "w": 12, "h": 20,
+				"fx": "caveJar",
 				"actions": [
 					{"type": "say", "speaker": "しおん", "text": "星しおは、こっちの壺じゃなくてキッチンだよ。"},
 				],
@@ -444,6 +474,7 @@ const SCENES := {
 				"id": "caveCrystals",
 				"label": "床の結晶",
 				"x": 4, "y": 68, "w": 18, "h": 16,
+				"fx": "caveCrystals",
 				"actions": [
 					{"type": "say", "speaker": "結晶", "text": "チリン。月の井戸が、遠くで答える。"},
 				],
