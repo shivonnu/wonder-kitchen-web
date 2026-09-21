@@ -26,6 +26,7 @@ const MISS_LINES := {
 
 var _art: Control
 var _spots: Control
+var _gizmo: GizmoFx
 var _fx: Node2D
 var _walker: TextureRect
 var _rebuild_queued := false
@@ -44,6 +45,9 @@ func _ready() -> void:
 	_art.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_art)
+	_gizmo = GizmoFx.new()
+	_gizmo.z_index = 8
+	add_child(_gizmo)
 	_spots = Control.new()
 	_spots.layout_mode = 1
 	_spots.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -104,7 +108,7 @@ func _rebuild() -> void:
 			float(spot["y"]),
 			float(spot["w"]),
 			float(spot["h"]),
-			func() -> void: GameState.click_hotspot(captured),
+			func() -> void: _click_spot(captured),
 			_fx
 		)
 
@@ -156,6 +160,17 @@ func _draw_overlays(scene_id: String) -> void:
 				hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				Art.fill_pct(hint, 18, 58, 64, 12)
 				_art.add_child(hint)
+
+
+func _click_spot(spot: Dictionary) -> void:
+	var fx := str(spot.get("fx", ""))
+	if fx != "" and _gizmo != null:
+		if _gizmo.busy:
+			return
+		await _gizmo.play(fx)
+		if not is_inside_tree():
+			return
+	GameState.click_hotspot(spot)
 
 
 func _walk_road(r: TextureRect) -> void:
