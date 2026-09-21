@@ -14,6 +14,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	layout_mode = 1
+	clip_contents = true
 
 
 func play(kind: String) -> void:
@@ -63,24 +64,30 @@ func _play_clock() -> void:
 	face.position = CLOCK_FACE_POS
 	world.add_child(face)
 
-	var hour := _hand(world, 0.55, -12.0)
-	var minute := _hand(world, 0.92, 48.0)
+	# Hand texture tip sits ~115px from the hub at scale 1. Keep tips inside the ring.
+	var hour := _hand(world, (CLOCK_RAD * 0.58) / 115.0, 228.0)
+	var minute := _hand(world, (CLOCK_RAD * 0.88) / 115.0, 48.0)
 
-	var door := _spr(world, "res://assets/art/clock-door.png", Vector2(CLOCK_HUB.x, CLOCK_HUB.y - CLOCK_RAD + 4.0), 1.15)
+	var hatch := Vector2(CLOCK_HUB.x, CLOCK_HUB.y - 44.0)
+	var door := _spr(world, "res://assets/art/clock-door.png", hatch, 0.72)
 	if door.texture:
-		door.offset = Vector2(0.0, -door.texture.get_height() * 0.45)
+		door.offset = Vector2(0.0, -door.texture.get_height() * 0.42)
 	door.visible = false
 	door.z_index = 3
 
-	var bird := _spr(world, "res://assets/art/clock-bird.png", Vector2(CLOCK_HUB.x + 6.0, CLOCK_HUB.y - CLOCK_RAD + 8.0), 0.55)
+	var bird := _spr(world, "res://assets/art/clock-bird.png", hatch, 0.28)
 	bird.visible = false
 	bird.z_index = 4
+
+	await get_tree().create_timer(0.08).timeout
+	if not is_instance_valid(world):
+		return
 
 	var spin := create_tween()
 	spin.set_trans(Tween.TRANS_QUAD)
 	spin.set_ease(Tween.EASE_IN)
-	spin.tween_property(minute, "rotation_degrees", minute.rotation_degrees + 1260.0, 1.4)
-	spin.parallel().tween_property(hour, "rotation_degrees", hour.rotation_degrees + 740.0, 1.4)
+	spin.tween_property(minute, "rotation_degrees", minute.rotation_degrees + 1620.0, 1.65)
+	spin.parallel().tween_property(hour, "rotation_degrees", hour.rotation_degrees + 880.0, 1.65)
 	await spin.finished
 	if not is_instance_valid(world):
 		return
@@ -93,30 +100,29 @@ func _play_clock() -> void:
 		return
 
 	bird.visible = true
-	bird.scale = Vector2(0.22, 0.22)
-	var perch := Vector2(CLOCK_HUB.x + 10.0, CLOCK_HUB.y - CLOCK_RAD - 22.0)
+	bird.scale = Vector2(0.16, 0.16)
+	var perch := Vector2(CLOCK_HUB.x + 6.0, CLOCK_HUB.y - 52.0)
 	var pop := create_tween()
 	pop.set_trans(Tween.TRANS_BACK)
 	pop.set_ease(Tween.EASE_OUT)
 	pop.tween_property(bird, "position", perch, 0.28)
-	pop.parallel().tween_property(bird, "scale", Vector2(0.62, 0.62), 0.28)
+	pop.parallel().tween_property(bird, "scale", Vector2(0.42, 0.42), 0.28)
 	await pop.finished
 	if not is_instance_valid(world):
 		return
 
 	Art.spark_at(self, bird.to_global(Vector2.ZERO))
 	var bob := create_tween()
-	bob.tween_property(bird, "position:y", perch.y - 8.0, 0.12)
-	bob.tween_property(bird, "position:y", perch.y + 3.0, 0.16)
+	bob.tween_property(bird, "position:y", perch.y - 6.0, 0.12)
+	bob.tween_property(bird, "position:y", perch.y + 2.0, 0.16)
 	await bob.finished
 	await get_tree().create_timer(0.32).timeout
 	if not is_instance_valid(world):
 		return
 
-	var hole := Vector2(CLOCK_HUB.x + 6.0, CLOCK_HUB.y - CLOCK_RAD + 8.0)
 	var back := create_tween()
-	back.tween_property(bird, "position", hole, 0.16)
-	back.parallel().tween_property(bird, "scale", Vector2(0.2, 0.2), 0.16)
+	back.tween_property(bird, "position", hatch, 0.16)
+	back.parallel().tween_property(bird, "scale", Vector2(0.14, 0.14), 0.16)
 	back.tween_property(door, "rotation_degrees", 0.0, 0.12)
 	await back.finished
 	if not is_instance_valid(world):
@@ -124,7 +130,7 @@ func _play_clock() -> void:
 
 	bird.visible = false
 	door.visible = false
-	hour.rotation_degrees = -12.0
+	hour.rotation_degrees = 228.0
 	minute.rotation_degrees = 48.0
 	await get_tree().create_timer(0.22).timeout
 	_clear()
