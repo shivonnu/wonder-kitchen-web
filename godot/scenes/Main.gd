@@ -332,11 +332,13 @@ func _build_moment() -> void:
 
 	_moment_col = VBoxContainer.new()
 	_moment_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	_moment_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_moment_col.add_theme_constant_override("separation", 10)
 	_moment_card.add_child(_moment_col)
 
 	_moment_kicker = Label.new()
 	_moment_kicker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_moment_kicker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_moment_kicker.add_theme_color_override("font_color", Art.GOLD)
 	_moment_kicker.add_theme_font_size_override("font_size", 15)
 	_moment_col.add_child(_moment_kicker)
@@ -352,12 +354,14 @@ func _build_moment() -> void:
 
 	_moment_title = Label.new()
 	_moment_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_moment_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_moment_title.add_theme_color_override("font_color", Art.CREAM)
 	_moment_title.add_theme_font_size_override("font_size", 22)
 	_moment_col.add_child(_moment_title)
 
 	_moment_hint = Label.new()
 	_moment_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_moment_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_moment_hint.add_theme_color_override("font_color", Color(0.957, 0.937, 0.894, 0.75))
 	_moment_hint.add_theme_font_size_override("font_size", 13)
 	_moment_col.add_child(_moment_hint)
