@@ -46,7 +46,8 @@ func _ready() -> void:
 	_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_art)
 	_gizmo = GizmoFx.new()
-	_gizmo.z_index = 8
+	_gizmo.z_index = 60
+	_gizmo.z_as_relative = false
 	add_child(_gizmo)
 	_spots = Control.new()
 	_spots.layout_mode = 1
