@@ -341,7 +341,7 @@ func _spr_fit(world: Node2D, path: String, pos: Vector2, target_h: float) -> Spr
 	return s
 
 
-func _spr(world: Node2D, path: String, pos: Vector2, sc: float) -> Sprite2D:
+func _spr(parent: Node, path: String, pos: Vector2, sc: float) -> Sprite2D:
 	var s := Sprite2D.new()
 	s.texture = load(path)
 	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -349,7 +349,7 @@ func _spr(world: Node2D, path: String, pos: Vector2, sc: float) -> Sprite2D:
 	s.centered = true
 	s.position = pos
 	s.scale = Vector2(sc, sc)
-	world.add_child(s)
+	parent.add_child(s)
 	return s
 
 
@@ -600,47 +600,130 @@ func _play_sink() -> void:
 
 
 func _play_shelf() -> void:
-	var world := _begin()
+	var host := get_parent() as AdventureScreen
+	if host:
+		host.set_kitchen_actors_visible(false)
+	await _shelf_seq()
+	_clear()
+	if host and is_instance_valid(host):
+		host.set_kitchen_actors_visible(true)
+
+
+func _shelf_seq() -> void:
+	var world := _world()
 	if not _ok(world):
 		return
-	var hub := _hub()
-	var jars: Array[Node2D] = []
-	var cols := [Color(0.85, 0.8, 0.7, 0.92), Color(0.7, 0.55, 0.4, 0.92), Color(0.91, 0.77, 0.42, 0.98)]
-	for i in 3:
-		var j := _box(world, hub + Vector2(float(i - 1) * 56.0, 4.0), Vector2(36, 54), cols[i], 5)
-		jars.append(j)
-	var base: Array[float] = []
-	for j in jars:
-		base.append(j.position.x)
-	for _k in 3:
-		var shake := create_tween()
-		for i in jars.size():
-			shake.parallel().tween_property(jars[i], "position:x", base[i] + 7.0, 0.08)
-		await shake.finished
-		if not _ok(world):
+
+	var jar_rest := Vector2(227.0, 195.5)
+	var jar_hold := Vector2(252.0, 186.0)
+	var shion_home := Vector2(460.8, 453.6)
+	var shion_jar := Vector2(292.0, 208.0)
+	var pepper := Color(0.62, 0.32, 0.14, 0.95)
+
+	var glow := _disc(world, jar_rest, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.35).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.35)
+
+	var jar := Node2D.new()
+	jar.position = jar_rest
+	jar.z_index = 8
+	world.add_child(jar)
+	var body := _spr(jar, "res://assets/art/pepper-jar-body.png", Vector2.ZERO, 1.0)
+	body.z_index = 0
+	var lid := _spr(jar, "res://assets/art/pepper-jar-lid.png", Vector2.ZERO, 1.0)
+	lid.z_index = 2
+
+	var shion := _spr(world, "res://assets/art/shion-idle.png", shion_home, 1.0)
+	shion.z_index = 10
+	if shion.texture:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = shion.texture
+		atlas.region = Rect2(0.0, 0.0, shion.texture.get_width() * 0.5, shion.texture.get_height())
+		shion.texture = atlas
+		var th := float(atlas.get_height())
+		if th > 1.0:
+			shion.scale = Vector2.ONE * (130.0 / th)
+
+	# しおんがテーブルから右端のビンの横へ。2秒。
+	var arrive := create_tween()
+	arrive.set_trans(Tween.TRANS_SINE)
+	arrive.set_ease(Tween.EASE_IN_OUT)
+	var start := shion_home
+	arrive.tween_method(func(t: float) -> void:
+		if not _ok(shion):
 			return
-		shake = create_tween()
-		for i in jars.size():
-			shake.parallel().tween_property(jars[i], "position:x", base[i] - 7.0, 0.08)
-		await shake.finished
-		if not _ok(world):
-			return
-		shake = create_tween()
-		for i in jars.size():
-			shake.parallel().tween_property(jars[i], "position:x", base[i], 0.08)
-		await shake.finished
-		if not _ok(world):
-			return
+		shion.position = start.lerp(shion_jar, t) + Vector2(0.0, -sin(t * PI) * 70.0)
+	, 0.0, 1.0, 2.0)
+	await arrive.finished
 	if not _ok(world):
 		return
-	var hide := create_tween()
-	hide.tween_property(jars[0], "modulate:a", 0.0, 0.28)
-	hide.parallel().tween_property(jars[1], "modulate:a", 0.0, 0.28)
-	await hide.finished
+
+	# 蓋を開けて、ビンを少し手前へ。2秒。
+	var open := create_tween()
+	open.set_trans(Tween.TRANS_SINE)
+	open.set_ease(Tween.EASE_OUT)
+	open.tween_property(lid, "position:y", -26.0, 2.0)
+	open.parallel().tween_property(lid, "rotation_degrees", -16.0, 2.0)
+	open.parallel().tween_property(jar, "position", jar_hold, 2.0)
+	open.parallel().tween_property(shion, "rotation_degrees", -8.0, 2.0)
+	await open.finished
 	if not _ok(world):
 		return
-	_puff(world, jars[2].position, Art.GOLD, 10, 0.45, 36.0)
-	await _pause(world, 0.4)
+
+	# よろこんで吸い込む。2秒。
+	var mouth := jar.position + Vector2(0.0, -22.0)
+	_puff(world, mouth, Color(0.95, 0.88, 0.78, 0.9), 12, 0.7, 28.0, Vector2(0, 8), (shion.position - mouth).normalized(), 18.0)
+	var heart_a := _blob(world, _tex_heart(), shion.position + Vector2(-10, -36), Vector2(18, 18), Color(1.0, 0.72, 0.82, 0.95), 12)
+	var heart_b := _blob(world, _tex_heart(), shion.position + Vector2(16, -28), Vector2(12, 12), Color(1.0, 0.82, 0.7, 0.9), 12)
+	var inhale := create_tween()
+	inhale.set_trans(Tween.TRANS_SINE)
+	inhale.tween_property(shion, "scale", shion.scale * 1.12, 0.7)
+	inhale.parallel().tween_property(shion, "position", shion_jar + Vector2(-10, -6), 0.7)
+	inhale.tween_property(shion, "scale", shion.scale, 0.6)
+	inhale.parallel().tween_property(heart_a, "position:y", heart_a.position.y - 22.0, 1.3)
+	inhale.parallel().tween_property(heart_a, "modulate:a", 0.0, 1.3)
+	inhale.parallel().tween_property(heart_b, "position:y", heart_b.position.y - 18.0, 1.3)
+	inhale.parallel().tween_property(heart_b, "modulate:a", 0.0, 1.3)
+	if not await _pause(world, 2.0):
+		return
+
+	# こしょうだったのでくしゃみ。3秒。
+	GameState.say("しおん", "っくしゅんっ！ …こしょうだ。")
+	_puff(world, mouth, pepper, 22, 0.85, 70.0, Vector2(0, 40), Vector2(0.55, -0.7), 70.0)
+	_puff(world, shion.position + Vector2(8, -8), pepper, 10, 0.5, 42.0, Vector2(0, 30), Vector2(0.4, -1), 50.0)
+	var sneeze := create_tween()
+	sneeze.tween_property(shion, "rotation_degrees", 14.0, 0.08)
+	sneeze.tween_property(shion, "rotation_degrees", -16.0, 0.08)
+	sneeze.tween_property(shion, "position", shion_jar + Vector2(14, 6), 0.1)
+	for _i in 6:
+		sneeze.tween_property(shion, "position:x", shion_jar.x + 10.0, 0.07)
+		sneeze.tween_property(shion, "position:x", shion_jar.x - 10.0, 0.07)
+	sneeze.tween_property(shion, "position", shion_jar, 0.18)
+	sneeze.parallel().tween_property(shion, "rotation_degrees", 0.0, 0.18)
+	if not await _pause(world, 1.15):
+		return
+	_puff(world, mouth, pepper, 8, 0.4, 28.0, Vector2(0, 20), Vector2(0.2, -1), 40.0)
+	if not await _pause(world, 1.85):
+		return
+
+	# 蓋を閉めて右端へ戻し、しおんもテーブルへ。3秒。
+	var back := create_tween()
+	back.set_trans(Tween.TRANS_SINE)
+	back.set_ease(Tween.EASE_IN_OUT)
+	back.tween_property(lid, "position:y", 0.0, 0.7)
+	back.parallel().tween_property(lid, "rotation_degrees", 0.0, 0.7)
+	back.parallel().tween_property(jar, "position", jar_rest, 3.0)
+	var home := shion.position
+	back.parallel().tween_method(func(t: float) -> void:
+		if not _ok(shion):
+			return
+		shion.position = home.lerp(shion_home, t) + Vector2(0.0, -sin(t * PI) * 56.0)
+		shion.rotation_degrees = lerpf(shion.rotation_degrees, 0.0, t)
+	, 0.0, 1.0, 3.0)
+	back.parallel().tween_property(glow, "modulate:a", 0.0, 1.2)
+	await back.finished
 
 
 func _play_floor_crystal() -> void:
