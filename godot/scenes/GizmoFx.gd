@@ -848,27 +848,124 @@ func _play_floor_crystal() -> void:
 
 
 func _play_wall_stars() -> void:
-	var world := _begin()
+	var world := _world()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var bits: Array[Node2D] = []
-	for i in 5:
-		var a := TAU * float(i) / 5.0
-		var p := _disc(world, hub + Vector2(cos(a), sin(a)) * 80.0, 16.0, Art.GOLD, 5)
-		bits.append(p)
-	var gather := create_tween()
-	for p in bits:
-		gather.parallel().tween_property(p, "position", hub, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	await gather.finished
+	var glow := _disc(world, hub, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.32).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.32)
+
+	# 壁に焼き込まれた星くず + 起き上がる細かい粒。
+	var specs: Array[Dictionary] = [
+		{"p": Vector2(513, 28), "r": 8.0, "s": 0.42, "home": true},
+		{"p": Vector2(546, 31), "r": 5.0, "s": 0.22, "home": true},
+		{"p": Vector2(609, 55), "r": 6.0, "s": 0.28, "home": true},
+		{"p": Vector2(476, 66), "r": 5.0, "s": 0.22, "home": true},
+		{"p": Vector2(493, 74), "r": 5.0, "s": 0.2, "home": true},
+		{"p": Vector2(487, 108), "r": 5.0, "s": 0.18, "home": true},
+		{"p": Vector2(659, 45), "r": 5.0, "s": 0.2, "home": true},
+		{"p": Vector2(705, 65), "r": 11.0, "s": 0.55, "home": true},
+		{"p": Vector2(649, 192), "r": 5.0, "s": 0.2, "home": true},
+		{"p": Vector2(558, 44), "r": 0.0, "s": 0.3, "home": false},
+		{"p": Vector2(582, 78), "r": 0.0, "s": 0.26, "home": false},
+		{"p": Vector2(536, 96), "r": 0.0, "s": 0.24, "home": false},
+		{"p": Vector2(618, 42), "r": 0.0, "s": 0.28, "home": false},
+		{"p": Vector2(598, 128), "r": 0.0, "s": 0.22, "home": false},
+		{"p": Vector2(548, 148), "r": 0.0, "s": 0.24, "home": false},
+		{"p": Vector2(638, 98), "r": 0.0, "s": 0.26, "home": false},
+		{"p": Vector2(510, 88), "r": 0.0, "s": 0.22, "home": false},
+	]
+	var wall := Color(0.016, 0.047, 0.122, 1.0)
+	var spark_tex: Texture2D = load("res://assets/art/sparkle.png")
+	var holds: Array[Node2D] = []
+	var rests: Array[Vector2] = []
+	var sc0: Array[float] = []
+	var drift: Array[Vector2] = []
+	var froms: Array[Vector2] = []
+	var phases: Array[float] = []
+	var homes: Array[bool] = []
+	for i in specs.size():
+		var spec: Dictionary = specs[i]
+		var rest: Vector2 = spec["p"]
+		var cr := float(spec["r"])
+		if cr > 0.5:
+			_disc(world, rest, cr, wall, 4)
+		var hold := Node2D.new()
+		hold.position = rest
+		hold.z_index = 12
+		hold.scale = Vector2.ONE * float(spec["s"])
+		hold.modulate.a = 1.0 if bool(spec["home"]) else 0.0
+		world.add_child(hold)
+		var spark := Sprite2D.new()
+		spark.texture = spark_tex
+		spark.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		spark.centered = true
+		spark.modulate = Art.GOLD if i % 2 == 0 else Art.SALT
+		hold.add_child(spark)
+		var ang := deg_to_rad(64.0 + float(i) * 17.0)
+		holds.append(hold)
+		rests.append(rest)
+		sc0.append(float(spec["s"]))
+		drift.append(Vector2(sin(ang) * 110.0, 430.0 + float(i % 6) * 48.0))
+		froms.append(Vector2(rest.x + sin(float(i) * 1.7) * 34.0, 742.0 + float(i % 4) * 14.0))
+		phases.append(float(i) * 0.73)
+		homes.append(bool(spec["home"]))
+
+	# ずっと壁にいた星が、ゆっくり流れはじめて見えなくなる。5秒。
+	var flow := create_tween()
+	flow.set_trans(Tween.TRANS_LINEAR)
+	flow.tween_method(func(t: float) -> void:
+		var u := t * t
+		for i in holds.size():
+			var h: Node2D = holds[i]
+			if not _ok(h):
+				continue
+			var wob := Vector2(
+				sin(t * TAU * 1.15 + phases[i]) * 18.0 * t,
+				cos(t * TAU * 0.85 + phases[i]) * 9.0 * t
+			)
+			h.position = rests[i] + drift[i] * u + wob
+			var wake := 1.0 if homes[i] else minf(1.0, t / 0.14)
+			h.modulate.a = wake * (1.0 - t)
+			var sc := sc0[i] * (1.0 + 0.5 * t)
+			h.scale = Vector2(sc, sc)
+			h.rotation = sin(t * 5.0 + phases[i]) * 0.4
+	, 0.0, 1.0, 5.0)
+	await flow.finished
 	if not _ok(world):
 		return
-	_puff(world, hub, Art.SALT, 16, 0.5, 44.0)
-	var flash := _disc(world, hub, 64.0, Color(1, 1, 1, 0.7), 6)
-	var fade := create_tween()
-	fade.tween_property(flash, "modulate:a", 0.0, 0.35)
-	fade.parallel().tween_property(flash, "scale", Vector2(1.8, 1.8), 0.35)
-	await fade.finished
+
+	for i in holds.size():
+		if _ok(holds[i]):
+			holds[i].position = froms[i]
+			holds[i].modulate.a = 0.0
+			holds[i].rotation = 0.0
+			var sc := sc0[i] * 1.35
+			holds[i].scale = Vector2(sc, sc)
+
+	# 下側から戻って、元の場所に収まる。5秒。
+	var back := create_tween()
+	back.set_trans(Tween.TRANS_LINEAR)
+	back.tween_method(func(t: float) -> void:
+		var u := 1.0 - (1.0 - t) * (1.0 - t)
+		for i in holds.size():
+			var h: Node2D = holds[i]
+			if not _ok(h):
+				continue
+			h.position = froms[i].lerp(rests[i], u) + Vector2(0.0, -sin(t * PI) * 36.0)
+			var a := minf(1.0, t / 0.2)
+			if not homes[i] and t > 0.86:
+				a *= (1.0 - t) / 0.14
+			h.modulate.a = a
+			var sc := lerpf(sc0[i] * 1.35, sc0[i], u)
+			h.scale = Vector2(sc, sc)
+			h.rotation = sin((1.0 - t) * 4.0 + phases[i]) * 0.28 * (1.0 - t)
+	, 0.0, 1.0, 5.0)
+	back.parallel().tween_property(glow, "modulate:a", 0.0, 1.4).set_delay(3.6)
+	await back.finished
 
 
 func _play_table() -> void:
