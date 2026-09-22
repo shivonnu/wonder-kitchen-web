@@ -145,7 +145,10 @@ func _draw_overlays(scene_id: String) -> void:
 		"kitchen":
 			if GameState.has_flag("kitchenFaucet"):
 				Art.sprite(_art, "res://assets/art/water-stream.png", 7.4, 40.5, 5.2, 22.0, false, false)
-			Art.sprite(_art, "res://assets/art/shion-idle.png", 32, 54, 8, 18, true, true)
+			var pepper := Art.sprite(_art, "res://assets/art/pepper-jar.png", 16.17, 22.64, 3.13, 9.03, false, false)
+			pepper.name = "pepperJar"
+			var shion := Art.sprite(_art, "res://assets/art/shion-idle.png", 32, 54, 8, 18, true, true)
+			shion.name = "kitchenShion"
 			if not GameState.has_flag("lunaLeft"):
 				Art.sprite(_art, "res://assets/art/luna-idle.png", 46, 52, 10, 18, true, true)
 			else:
@@ -178,6 +181,13 @@ func _draw_overlays(scene_id: String) -> void:
 				hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				Art.fill_pct(hint, 18, 58, 64, 12)
 				_art.add_child(hint)
+
+
+func set_kitchen_actors_visible(on: bool) -> void:
+	for n in ["kitchenShion", "pepperJar"]:
+		var c := _art.get_node_or_null(n)
+		if c:
+			c.visible = on
 
 
 func _click_spot(spot: Dictionary) -> void:
