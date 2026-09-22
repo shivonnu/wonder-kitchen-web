@@ -867,7 +867,7 @@ func _play_wall_stars() -> void:
 		{"p": Vector2(493, 74), "r": 5.0, "s": 0.2, "home": true},
 		{"p": Vector2(487, 108), "r": 5.0, "s": 0.18, "home": true},
 		{"p": Vector2(659, 45), "r": 5.0, "s": 0.2, "home": true},
-		{"p": Vector2(705, 65), "r": 11.0, "s": 0.55, "home": true},
+		{"p": Vector2(705, 65), "r": 14.0, "s": 0.55, "home": true},
 		{"p": Vector2(649, 192), "r": 5.0, "s": 0.2, "home": true},
 		{"p": Vector2(558, 44), "r": 0.0, "s": 0.3, "home": false},
 		{"p": Vector2(582, 78), "r": 0.0, "s": 0.26, "home": false},
@@ -910,7 +910,7 @@ func _play_wall_stars() -> void:
 		rests.append(rest)
 		sc0.append(float(spec["s"]))
 		drift.append(Vector2(sin(ang) * 110.0, 430.0 + float(i % 6) * 48.0))
-		froms.append(Vector2(rest.x + sin(float(i) * 1.7) * 34.0, 742.0 + float(i % 4) * 14.0))
+		froms.append(Vector2(rest.x + sin(float(i) * 1.7) * 34.0, 668.0 + float(i % 4) * 12.0))
 		phases.append(float(i) * 0.73)
 		homes.append(bool(spec["home"]))
 
@@ -950,12 +950,12 @@ func _play_wall_stars() -> void:
 	var back := create_tween()
 	back.set_trans(Tween.TRANS_LINEAR)
 	back.tween_method(func(t: float) -> void:
-		var u := 1.0 - (1.0 - t) * (1.0 - t)
+		var u := t * t
 		for i in holds.size():
 			var h: Node2D = holds[i]
 			if not _ok(h):
 				continue
-			h.position = froms[i].lerp(rests[i], u) + Vector2(0.0, -sin(t * PI) * 36.0)
+			h.position = froms[i].lerp(rests[i], u) + Vector2(sin(t * PI) * 18.0 * (1.0 if i % 2 == 0 else -1.0), 0.0)
 			var a := minf(1.0, t / 0.2)
 			if not homes[i] and t > 0.86:
 				a *= (1.0 - t) / 0.14
