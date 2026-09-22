@@ -775,7 +775,6 @@ func _play_floor_crystal() -> void:
 		return
 
 	# 窓へ飛び出す。3秒。
-	_puff(world, hold.position, Art.SALT, 10, 0.45, 40.0, Vector2(0, 20), Vector2(-0.4, -1), 30.0)
 	var start := hold.position
 	var leap := create_tween()
 	leap.set_trans(Tween.TRANS_SINE)
@@ -784,29 +783,25 @@ func _play_floor_crystal() -> void:
 		if not _ok(hold):
 			return
 		hold.position = start.lerp(sky, t) + Vector2(0.0, -sin(t * PI) * 210.0)
-		hold.scale = Vector2.ONE.lerp(Vector2(0.38, 0.38), t)
+		hold.scale = Vector2.ONE.lerp(Vector2(0.48, 0.48), t)
 		hold.rotation_degrees = lerpf(-6.0, 12.0, t)
 	, 0.0, 1.0, 3.0)
 	leap.parallel().tween_property(glow, "modulate:a", 0.12, 1.4)
-	if not await _pause(world, 1.2):
-		return
-	_puff(world, hold.position, Art.GOLD, 8, 0.4, 28.0, Vector2(0, 10), Vector2(-0.2, -1), 24.0)
 	await leap.finished
 	if not _ok(world):
 		return
 
 	# 夜空で星座になる。2秒。
-	_puff(world, sky, Art.SALT, 14, 0.5, 32.0)
 	var pts: Array[Vector2] = [
-		sky + Vector2(-28, -70),
-		sky + Vector2(24, -66),
-		sky + Vector2(-12, -34),
-		sky + Vector2(18, -30),
-		sky + Vector2(4, -4),
-		sky + Vector2(-16, 28),
-		sky + Vector2(36, 16),
-		sky + Vector2(-30, 46),
-		sky + Vector2(16, 50),
+		sky + Vector2(-24, -74),
+		sky + Vector2(22, -70),
+		sky + Vector2(-12, -40),
+		sky + Vector2(14, -36),
+		sky + Vector2(4, -16),
+		sky + Vector2(-4, 10),
+		sky + Vector2(38, 6),
+		sky + Vector2(-30, 38),
+		sky + Vector2(16, 44),
 	]
 	var links: Array = [
 		[0, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [4, 6], [5, 7], [5, 8], [6, 8],
