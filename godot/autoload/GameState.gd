@@ -36,6 +36,18 @@ func has_flag(id: String) -> bool:
 	return id in flags
 
 
+func toggle_flag(id: String) -> bool:
+	if id == "":
+		return false
+	if id in flags:
+		flags.erase(id)
+	else:
+		flags.append(id)
+	flags_changed.emit()
+	persist()
+	return id in flags
+
+
 func can_cook() -> bool:
 	for id in RECIPE:
 		if id not in items:

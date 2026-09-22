@@ -561,29 +561,38 @@ func _fly_salt(hold: Node2D, start: Vector2, dest: Vector2, dur: float) -> void:
 
 
 func _play_sink() -> void:
-	var world := _begin()
+	var world := _world()
 	if not _ok(world):
 		return
-	var hub := _hub() + Vector2(8, -8)
-	_puff(world, hub, Art.SALT, 16, 0.5, 70.0, Vector2(0, 80), Vector2(0, -1), 50.0)
-	if not await _pause(world, 0.45):
-		return
-	_puff(world, hub + Vector2(10, 6), Color(0.55, 0.78, 1.0, 1), 12, 0.4, 58.0, Vector2(0, 90), Vector2(0, -1), 40.0)
-	if not await _pause(world, 0.35):
-		return
-	var ice := _box(world, hub + Vector2(6, 18), Vector2(52, 52), Color(0.78, 0.92, 1.0, 0.95), 6)
-	ice.rotation_degrees = 45.0
-	ice.scale = Vector2(0.2, 0.2)
-	var pop := create_tween()
-	pop.tween_property(ice, "scale", Vector2(1.0, 1.0), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	await pop.finished
+	var turning_on := not GameState.has_flag("kitchenFaucet")
+	var tap := Vector2(64, 366)
+	var spout := Vector2(116, 350)
+	var glow := _disc(world, tap, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.28).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.28)
+
+	var handle := Node2D.new()
+	handle.position = tap
+	handle.z_index = 8
+	world.add_child(handle)
+	_box(handle, Vector2.ZERO, Vector2(44, 8), Color(0.93, 0.82, 0.52, 0.95), 8)
+	_box(handle, Vector2(0, 9), Vector2(9, 16), Color(0.85, 0.75, 0.45, 0.95), 8)
+	handle.rotation_degrees = 0.0 if turning_on else 72.0
+	var twist := create_tween()
+	twist.tween_property(handle, "rotation_degrees", 72.0 if turning_on else 0.0, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await twist.finished
 	if not _ok(world):
 		return
-	_puff(world, ice.position, Art.SALT, 8, 0.4, 28.0)
-	if not await _pause(world, 0.35):
+	GameState.toggle_flag("kitchenFaucet")
+	if turning_on:
+		_puff(world, spout, Art.SALT, 10, 0.4, 42.0, Vector2(0, 90), Vector2(0, 1), 14.0)
+	if not await _pause(world, 0.28):
 		return
 	var fade := create_tween()
-	fade.tween_property(ice, "modulate:a", 0.0, 0.28)
+	fade.tween_property(glow, "modulate:a", 0.0, 0.32)
+	fade.parallel().tween_property(handle, "modulate:a", 0.0, 0.32)
 	await fade.finished
 
 

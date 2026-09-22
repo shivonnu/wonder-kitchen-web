@@ -28,6 +28,7 @@ var _art: Control
 var _spots: Control
 var _gizmo: GizmoFx
 var _fx: Node2D
+var _water: CPUParticles2D
 var _walker: TextureRect
 var _rebuild_queued := false
 var _backdrop_scene := ""
@@ -57,6 +58,18 @@ func _ready() -> void:
 	_fx = Node2D.new()
 	_fx.z_index = 40
 	add_child(_fx)
+	_water = CPUParticles2D.new()
+	_water.emitting = false
+	_water.amount = 40
+	_water.lifetime = 0.7
+	_water.direction = Vector2(0, 1)
+	_water.spread = 8
+	_water.initial_velocity_min = 40
+	_water.initial_velocity_max = 90
+	_water.gravity = Vector2(0, 80)
+	_water.color = Color(0.72, 0.85, 1.0, 0.85)
+	_fx.add_child(_water)
+	resized.connect(_place_kitchen_water)
 	GameState.flags_changed.connect(refresh)
 	GameState.inventory_changed.connect(refresh)
 	refresh()
@@ -100,6 +113,7 @@ func _rebuild() -> void:
 		_draw_overlays(scene_id)
 		_overlay_sig = sig
 	_clear_later_children(_spots, 0)
+	_place_kitchen_water()
 	for spot in Hotspots.visible(scene_id):
 		var captured: Dictionary = spot
 		Art.hotspot(
@@ -118,6 +132,7 @@ func _current_overlay_sig(scene_id: String) -> String:
 	return "|".join([
 		scene_id,
 		str(GameState.has_flag("lunaLeft")),
+		str(GameState.has_flag("kitchenFaucet")),
 		str(GameState.has_item("potato")),
 		str(GameState.has_item("onion")),
 		str(GameState.has_item("moonMilk")),
@@ -128,6 +143,8 @@ func _current_overlay_sig(scene_id: String) -> String:
 func _draw_overlays(scene_id: String) -> void:
 	match scene_id:
 		"kitchen":
+			if GameState.has_flag("kitchenFaucet"):
+				Art.sprite(_art, "res://assets/art/water-stream.png", 7.4, 40.5, 5.2, 22.0, false, false)
 			Art.sprite(_art, "res://assets/art/shion-idle.png", 32, 54, 8, 18, true, true)
 			if not GameState.has_flag("lunaLeft"):
 				Art.sprite(_art, "res://assets/art/luna-idle.png", 46, 52, 10, 18, true, true)
@@ -172,6 +189,15 @@ func _click_spot(spot: Dictionary) -> void:
 		if not is_inside_tree():
 			return
 	GameState.click_hotspot(spot)
+
+
+func _place_kitchen_water() -> void:
+	if _water == null:
+		return
+	_water.position = Vector2(size.x * 0.099, size.y * 0.485)
+	var on := GameState.scene == "kitchen" and GameState.has_flag("kitchenFaucet")
+	_water.emitting = on
+	_water.visible = on
 
 
 func _walk_road(r: TextureRect) -> void:
