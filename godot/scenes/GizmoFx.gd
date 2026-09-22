@@ -587,7 +587,10 @@ func _play_sink() -> void:
 		return
 	GameState.toggle_flag("kitchenFaucet")
 	if turning_on:
+		GameState.say("流し", "水のかわりに、うすい星くずがさらさら流れている。つめたい。")
 		_puff(world, spout, Art.SALT, 10, 0.4, 42.0, Vector2(0, 90), Vector2(0, 1), 14.0)
+	else:
+		GameState.say("流し", "水をとめた。もう一度ひねれば、また出るよ。")
 	if not await _pause(world, 0.28):
 		return
 	var fade := create_tween()

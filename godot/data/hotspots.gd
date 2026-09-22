@@ -188,20 +188,7 @@ const SCENES := {
 				"label": "流し",
 				"x": 0, "y": 40, "w": 18, "h": 32,
 				"fx": "sink",
-				"hideWhen": ["kitchenFaucet"],
-				"actions": [
-					{"type": "say", "speaker": "流し", "text": "水のかわりに、うすい星くずがさらさら流れている。つめたい。"},
-				],
-			},
-			{
-				"id": "sinkOff",
-				"label": "流し",
-				"x": 0, "y": 40, "w": 18, "h": 32,
-				"fx": "sink",
-				"showWhen": ["kitchenFaucet"],
-				"actions": [
-					{"type": "say", "speaker": "流し", "text": "水をとめた。もう一度ひねれば、また出るよ。"},
-				],
+				"actions": [],
 			},
 			{
 				"id": "shelf",
