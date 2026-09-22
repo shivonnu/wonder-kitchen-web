@@ -999,18 +999,18 @@ func _play_table() -> void:
 	face.modulate.a = 0.0
 	face.z_index = 4
 	actor.add_child(face)
-	_disc(face, Vector2(-9.0, -2.0), 5.6, Color(0.12, 0.14, 0.22, 1.0), 3)
-	_disc(face, Vector2(9.0, -2.0), 5.6, Color(0.12, 0.14, 0.22, 1.0), 3)
-	_disc(face, Vector2(-7.0, -3.5), 2.1, Color(0.95, 0.97, 1.0, 0.95), 4)
-	_disc(face, Vector2(11.0, -3.5), 2.1, Color(0.95, 0.97, 1.0, 0.95), 4)
-	_box(face, Vector2(0.0, 8.0), Vector2(11.0, 3.2), Color(0.32, 0.15, 0.07, 0.95), 3)
+	_disc(face, Vector2(-10.0, -2.0), 6.4, Color(0.12, 0.14, 0.22, 1.0), 3)
+	_disc(face, Vector2(10.0, -2.0), 6.4, Color(0.12, 0.14, 0.22, 1.0), 3)
+	_disc(face, Vector2(-8.0, -3.8), 2.4, Color(0.95, 0.97, 1.0, 0.95), 4)
+	_disc(face, Vector2(12.0, -3.8), 2.4, Color(0.95, 0.97, 1.0, 0.95), 4)
+	_box(face, Vector2(0.0, 9.0), Vector2(12.0, 3.4), Color(0.32, 0.15, 0.07, 0.95), 3)
 
-	var leg_l := _box(actor, Vector2(-13.0, 58.0), Vector2(9.0, 22.0), Color(0.42, 0.22, 0.10, 1.0), 2)
-	var leg_r := _box(actor, Vector2(13.0, 58.0), Vector2(9.0, 22.0), Color(0.42, 0.22, 0.10, 1.0), 2)
+	var leg_l := _box(actor, Vector2(-14.0, 78.0), Vector2(11.0, 28.0), Color(0.22, 0.10, 0.05, 1.0), 2)
+	var leg_r := _box(actor, Vector2(14.0, 78.0), Vector2(11.0, 28.0), Color(0.22, 0.10, 0.05, 1.0), 2)
 	leg_l.modulate.a = 0.0
 	leg_r.modulate.a = 0.0
 
-	var memo := _spr_fit(actor, "res://assets/art/icon-memo.png", Vector2(34.0, -92.0), 72.0)
+	var memo := _spr_fit(actor, "res://assets/art/icon-memo.png", Vector2(42.0, -108.0), 112.0)
 	memo.z_index = 6
 	memo.modulate.a = 0.0
 	memo.scale *= 0.2
