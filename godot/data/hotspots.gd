@@ -18,6 +18,17 @@ const HAND_NAMES := {
 	"chopped_onion": "切った月たまねぎ",
 	"moonMilk": "月牛乳",
 	"starSalt": "星しお",
+	"pot": "お鍋",
+}
+
+const POT_ART := "res://assets/art/cook-pot.png"
+const POT_STOVE := {
+	"kitchen": [19.5, 35.8, 15.8, 14.8],
+	"cooking": [22.7, 33.1, 16.3, 16.9],
+}
+const POT_SINK := {
+	"kitchen": [2.6, 47.0, 13.4, 14.0],
+	"cooking": [3.4, 45.6, 14.2, 14.8],
 }
 
 const BACK := {
@@ -160,10 +171,7 @@ const SCENES := {
 				"id": "pot",
 				"label": "お鍋",
 				"x": 18, "y": 32, "w": 16, "h": 28,
-				"fx": "pot",
-				"actions": [
-					{"type": "say", "speaker": "しおん", "text": "まだ何も入っていない。材料がそろったら、ここで煮よう。"},
-				],
+				"actions": [],
 			},
 			{
 				"id": "clock",
@@ -185,9 +193,15 @@ const SCENES := {
 			},
 			{
 				"id": "sink",
-				"label": "流し",
-				"x": 0, "y": 40, "w": 18, "h": 32,
+				"label": "蛇口",
+				"x": 1, "y": 32, "w": 12, "h": 18,
 				"fx": "sink",
+				"actions": [],
+			},
+			{
+				"id": "sinkBasin",
+				"label": "流し",
+				"x": 1, "y": 48, "w": 16, "h": 22,
 				"actions": [],
 			},
 			{
@@ -529,3 +543,37 @@ static func _give_already_taken(spot: Dictionary) -> bool:
 			if not GameState.has_flag(str(a.get("flag", ""))):
 				return false
 	return any_give
+
+
+static func pot_rect(scene_id: String) -> Array:
+	if GameState.hand == "pot":
+		return []
+	var table: Dictionary = POT_SINK if GameState.pot_place == "sink" else POT_STOVE
+	return table.get(scene_id, POT_STOVE["kitchen"])
+
+
+static func draw_pot(parent: Control, scene_id: String, cooked := false, has_food := false, has_milk := false, has_onion := false) -> void:
+	var r: Array = pot_rect(scene_id)
+	if r.is_empty():
+		return
+	Art.sprite(parent, POT_ART, float(r[0]), float(r[1]), float(r[2]), float(r[3]), false, false)
+	draw_pot_contents(parent, r, cooked, has_food, has_milk, has_onion)
+
+
+static func draw_pot_contents(parent: Control, r: Array, cooked := false, has_food := false, has_milk := false, has_onion := false) -> void:
+	if r.is_empty():
+		return
+	var x := float(r[0]) + float(r[2]) * 0.18
+	var y := float(r[1]) + float(r[3]) * 0.10
+	var w := float(r[2]) * 0.64
+	var h := float(r[3]) * 0.18
+	if cooked:
+		Art.sprite(parent, "res://assets/art/pot-liquid-potage.png", x, y, w, h)
+	elif has_food:
+		Art.sprite(parent, "res://assets/art/pot-liquid-soup.png", x, y, w, h)
+	elif GameState.pot_water:
+		Art.sprite(parent, "res://assets/art/pot-liquid-water.png", x, y, w, h)
+	if has_milk:
+		Art.sprite(parent, "res://assets/art/pot-liquid-milk.png", x, y, w, h)
+	if has_onion:
+		Art.sprite(parent, "res://assets/art/pot-liquid-onion.png", x, y, w, h)

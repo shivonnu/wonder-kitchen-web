@@ -121,7 +121,7 @@ func _show_scene(scene_id: String) -> void:
 func _refresh_hud() -> void:
 	var scene_id := GameState.scene
 	place_label.text = str(Hotspots.TITLES.get(scene_id, ""))
-	hand_label.visible = scene_id == "cooking"
+	hand_label.visible = scene_id == "cooking" or GameState.hand != ""
 	hand_label.text = "手: %s" % Hotspots.HAND_NAMES.get(GameState.hand, GameState.hand)
 	back_btn.visible = Hotspots.BACK.has(scene_id)
 	cook_btn.visible = GameState.can_cook() and scene_id != "cooking" and scene_id != "title" and scene_id != "ending"

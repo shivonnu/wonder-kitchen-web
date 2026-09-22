@@ -6,6 +6,7 @@ signal flags_changed
 signal dialogue_changed
 signal fading_changed(on: bool)
 signal hand_changed
+signal pot_changed
 signal item_got(id: String)
 signal dish_ready
 
@@ -22,6 +23,8 @@ var flags: Array[String] = []
 var dialogue: Dictionary = START_DIALOGUE.duplicate()
 var fading: bool = false
 var hand: String = ""
+var pot_place: String = "stove"
+var pot_water: bool = false
 var has_save: bool = false
 
 func _ready() -> void:
@@ -83,17 +86,47 @@ func clear_hand() -> void:
 	hand_changed.emit()
 
 
+func set_pot_place(next: String) -> void:
+	if next != "stove" and next != "sink":
+		next = "stove"
+	if pot_place == next:
+		return
+	pot_place = next
+	pot_changed.emit()
+	persist()
+
+
+func set_pot_water(on: bool) -> void:
+	if pot_water == on:
+		return
+	pot_water = on
+	pot_changed.emit()
+	persist()
+
+
+func fill_pot_in_sink(faucet_on: bool) -> bool:
+	if pot_place != "sink" or hand == "pot":
+		return false
+	if not faucet_on or pot_water:
+		return false
+	set_pot_water(true)
+	return true
+
+
 func start_new() -> void:
 	_wipe_save()
 	items.clear()
 	flags.clear()
 	hand = ""
+	pot_place = "stove"
+	pot_water = false
 	dialogue = START_DIALOGUE.duplicate()
 	has_save = true
 	inventory_changed.emit()
 	flags_changed.emit()
 	dialogue_changed.emit()
 	hand_changed.emit()
+	pot_changed.emit()
 	await change_scene("kitchen")
 	persist()
 
@@ -108,12 +141,15 @@ func debug_fill_and_cook() -> void:
 	for flag in ["metShion", "gotMemo", "lunaLeft", "windowOpen", "saltTaken"]:
 		flags.append(flag)
 	hand = ""
+	pot_place = "stove"
+	pot_water = false
 	dialogue = {"speaker": "しおん", "text": "そろったね。つくってみよう。"}
 	has_save = true
 	inventory_changed.emit()
 	flags_changed.emit()
 	dialogue_changed.emit()
 	hand_changed.emit()
+	pot_changed.emit()
 	await change_scene("cooking")
 	persist()
 
@@ -130,10 +166,15 @@ func continue_game() -> void:
 		flags.append(str(id))
 	dialogue = saved.get("dialogue", START_DIALOGUE.duplicate())
 	hand = ""
+	pot_place = str(saved.get("potPlace", "stove"))
+	if pot_place != "stove" and pot_place != "sink":
+		pot_place = "stove"
+	pot_water = bool(saved.get("potWater", false))
 	inventory_changed.emit()
 	flags_changed.emit()
 	dialogue_changed.emit()
 	hand_changed.emit()
+	pot_changed.emit()
 	var next := str(saved.get("scene", "kitchen"))
 	if next == "title":
 		next = "kitchen"
@@ -145,12 +186,15 @@ func reset() -> void:
 	items.clear()
 	flags.clear()
 	hand = ""
+	pot_place = "stove"
+	pot_water = false
 	dialogue = START_DIALOGUE.duplicate()
 	has_save = false
 	inventory_changed.emit()
 	flags_changed.emit()
 	dialogue_changed.emit()
 	hand_changed.emit()
+	pot_changed.emit()
 	await change_scene("title")
 
 
@@ -282,6 +326,8 @@ func persist() -> void:
 		"items": items,
 		"flags": flags,
 		"dialogue": dialogue,
+		"potPlace": pot_place,
+		"potWater": pot_water,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:

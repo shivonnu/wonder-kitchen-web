@@ -16,6 +16,7 @@ const ART := {
 	"moonMilk": "res://assets/art/cook-milk.png",
 	"starSalt": "res://assets/art/cook-salt.png",
 	"knife": "res://assets/art/cook-knife.png",
+	"pot": "res://assets/art/cook-pot.png",
 }
 
 var loc := {
@@ -30,7 +31,6 @@ var chopped := {
 	"onion": false,
 }
 var water_on := false
-var pot_water := false
 var pot_fire := false
 var _done := false
 var _fx: Node2D
@@ -43,6 +43,7 @@ var _orbit_stars: Array[Sprite2D] = []
 var _orbit_t := 0.0
 var _overlays: Control
 var _held_fx: TextureRect
+var _held_water: TextureRect
 var _board_item: TextureRect
 var _shelf_btns := {}
 
@@ -84,7 +85,8 @@ func _ready() -> void:
 	resized.connect(_place_fx)
 	_place_fx()
 
-	Art.hotspot(self, "蛇口", 0, 32, 18, 38, _on_faucet)
+	Art.hotspot(self, "蛇口", 1, 30, 12, 18, _on_faucet)
+	Art.hotspot(self, "流し", 1, 46, 16, 24, _on_sink)
 	Art.hotspot(self, "お鍋", 18, 26, 18, 28, _on_pot)
 	Art.hotspot(self, "火", 18, 44, 20, 26, _on_fire)
 	Art.hotspot(self, "まな板", 38, 56, 28, 30, _on_board)
@@ -110,13 +112,24 @@ func _ready() -> void:
 	_held_fx.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_held_fx.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_held_fx.material = Art.chroma
-	_held_fx.size = Vector2(92, 92)
+	_held_fx.size = Vector2(140, 92)
 	_held_fx.z_index = 40
 	_held_fx.visible = false
 	add_child(_held_fx)
+	_held_water = TextureRect.new()
+	_held_water.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_held_water.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_held_water.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_held_water.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_held_water.material = Art.chroma
+	_held_water.size = Vector2(88, 18)
+	_held_water.z_index = 41
+	_held_water.visible = false
+	add_child(_held_water)
 
 	GameState.hand_changed.connect(_refresh_visuals)
-	GameState.say("しおん", "食材は左の棚。持ったらイラストがついてくるよ。置きたい場所をタップしてね。")
+	GameState.pot_changed.connect(_refresh_visuals)
+	GameState.say("しおん", "食材は左の棚。お鍋は持って流しへ。水をためてからコンロに戻してね。")
 	_refresh_visuals()
 
 
@@ -156,7 +169,7 @@ func _board_occupant() -> String:
 
 func _park_held(dest := "shelf") -> void:
 	var hand := GameState.hand
-	if hand == "":
+	if hand == "" or hand == "pot":
 		return
 	if hand == "knife":
 		loc["knife"] = "table"
@@ -240,6 +253,9 @@ func _on_shelf() -> void:
 	if hand == "":
 		_hint("食材が並んでいる棚。とりたいものをタップしてね。")
 		return
+	if hand == "pot":
+		_hint("お鍋はコンロか、流しへ置いてね。")
+		return
 	if hand == "knife":
 		_park_held("table")
 		_hint("包丁はまな板のところへ戻したよ。")
@@ -253,15 +269,67 @@ func _on_shelf() -> void:
 func _on_faucet() -> void:
 	if _done:
 		return
+	if GameState.hand == "pot":
+		_place_pot("sink")
+		return
 	if GameState.hand != "":
 		_hint("蛇口は素手でひねってね。持っているものは、いったん置こう。")
 		return
 	water_on = not water_on
 	_water.emitting = water_on
 	if water_on:
-		_hint("星くずの水が、さらさらと落ちてきた。つめたい。")
+		if GameState.fill_pot_in_sink(true):
+			_hint("白い星くずが、鍋にたまっていった。")
+		else:
+			_hint("星くずの水が、さらさらと落ちてきた。つめたい。")
 	else:
 		_hint("水をとめた。鍋に入れた分は、残っているよ。")
+	_refresh_visuals()
+
+
+func _on_sink() -> void:
+	if _done:
+		return
+	if GameState.hand == "pot":
+		_place_pot("sink")
+		return
+	if GameState.hand != "":
+		_hint("それは鍋へ。流しに置くのは、お鍋だよ。")
+		return
+	if GameState.pot_place == "sink":
+		_pick_pot()
+		return
+	_hint("流しだよ。お鍋を置くと、水をためられる。")
+
+
+func _place_pot(dest: String) -> void:
+	GameState.set_pot_place(dest)
+	GameState.clear_hand()
+	if dest == "sink":
+		if pot_fire:
+			pot_fire = false
+		if water_on and GameState.fill_pot_in_sink(true):
+			_hint("白い星くずが、鍋にたまっていった。")
+		elif GameState.pot_water:
+			_hint("水の入った鍋を、流しに置いたよ。")
+		else:
+			_hint("流しに置いたよ。蛇口をひねると、水が貯まる。")
+	else:
+		if GameState.pot_water:
+			_hint("コンロに戻したよ。具を入れていこう。")
+		else:
+			_hint("コンロに戻したよ。流しで水をためてから、煮よう。")
+	_refresh_visuals()
+
+
+func _pick_pot() -> void:
+	if pot_fire:
+		pot_fire = false
+	GameState.force_hand("pot")
+	if GameState.pot_water:
+		_hint("水の入った鍋を持った。コンロか流しへどうぞ。")
+	else:
+		_hint("お鍋を持った。流しに置くと、水をためられるよ。")
 	_refresh_visuals()
 
 
@@ -320,6 +388,8 @@ func _on_board() -> void:
 				_hint("三日月の層が光っている。")
 	elif hand == "moonMilk" or hand == "starSalt":
 		_hint("それは鍋へ。まな板じゃなくていいよ。")
+	elif hand == "pot":
+		_hint("お鍋はコンロか、流しへ置いてね。")
 	elif hand == "":
 		var occ := _board_occupant()
 		if occ != "":
@@ -341,22 +411,26 @@ func _on_pot() -> void:
 	if _done:
 		return
 	var hand := GameState.hand
-	if water_on and not pot_water and hand == "":
-		pot_water = true
-		_hint("白い星くずが鍋に落ちた。月の湯気の準備。")
-		_refresh_visuals()
+	if hand == "pot":
+		_place_pot("stove")
 		_check_done()
 		return
+	if GameState.pot_place != "stove":
+		if hand == "":
+			_hint("お鍋は、流しにあるよ。")
+		else:
+			_hint("鍋をコンロに戻してから入れてね。")
+		return
 	if hand == "chopped_potato":
-		if not pot_water:
-			_hint("先に蛇口から、星くずの水を鍋へ。")
+		if not GameState.pot_water:
+			_hint("先に鍋を流しへ置いて、星くずの水をためてね。")
 			return
 		loc["potato"] = "pot"
 		GameState.clear_hand()
 		_hint("鍋の底で、星くずがちょっとはねた。")
 	elif hand == "chopped_onion":
-		if not pot_water:
-			_hint("先に星くずの水を鍋へ入れてね。")
+		if not GameState.pot_water:
+			_hint("先に鍋を流しへ置いて、星くずの水をためてね。")
 			return
 		loc["onion"] = "pot"
 		GameState.clear_hand()
@@ -381,14 +455,8 @@ func _on_pot() -> void:
 	elif hand == "knife":
 		_hint("包丁はまな板で使ってね。")
 	elif hand == "":
-		if not pot_water:
-			if water_on:
-				pot_water = true
-				_hint("白い星くずが鍋に落ちた。月の湯気の準備。")
-			else:
-				_hint("蛇口をひねって、星くずの水を出してね。")
-		else:
-			_hint(_status_hint())
+		_pick_pot()
+		return
 	_refresh_visuals()
 	_check_done()
 
@@ -396,11 +464,17 @@ func _on_pot() -> void:
 func _on_fire() -> void:
 	if _done:
 		return
+	if GameState.hand == "pot":
+		_hint("火は素手でつけて。鍋はコンロに置いてから。")
+		return
 	if GameState.hand != "":
 		_hint("火は素手でつけて。持っているものは、いったん置いてね。")
 		return
-	if not pot_water:
-		_hint("空焚きはしないよ。先に水を鍋へ。")
+	if GameState.pot_place != "stove":
+		_hint("鍋をコンロに戻してから、火をつけてね。")
+		return
+	if not GameState.pot_water:
+		_hint("空焚きはしないよ。鍋を流しに置いて、水をためてね。")
 		return
 	if loc.get("potato", "") != "pot" or loc.get("onion", "") != "pot" or loc.get("moonMilk", "") != "pot":
 		_hint("具と牛乳を入れてから、火をつけよう。焦らなくていい。")
@@ -412,8 +486,18 @@ func _on_fire() -> void:
 
 
 func _status_hint() -> String:
-	if not pot_water:
-		return "蛇口をひねって、星くずの水を鍋へ。"
+	if GameState.hand == "pot":
+		if GameState.pot_water:
+			return "水が入っているよ。コンロに戻して。"
+		return "鍋を流しに置くと、水をためられるよ。"
+	if GameState.pot_place == "sink":
+		if not GameState.pot_water:
+			if water_on:
+				return "星くずが鍋にたまっているよ。"
+			return "蛇口をひねって、鍋に水をためてね。"
+		return "水がたまったよ。鍋をコンロに戻して。"
+	if not GameState.pot_water:
+		return "お鍋を持って、流しに置いて水をためてね。"
 	if loc.get("potato", "") != "pot":
 		if chopped.get("potato", false):
 			return "切った星いもを持って、鍋へ入れてね。"
@@ -450,6 +534,8 @@ func _process(_delta: float) -> void:
 		return
 	if GameState.hand == "":
 		_held_fx.visible = false
+		if _held_water:
+			_held_water.visible = false
 		return
 	_held_fx.visible = true
 	var p := get_global_mouse_position()
@@ -457,6 +543,11 @@ func _process(_delta: float) -> void:
 	p.x = clampf(p.x, r.position.x + 8.0, r.position.x + maxf(24.0, r.size.x - 8.0))
 	p.y = clampf(p.y, r.position.y + 8.0, r.position.y + maxf(24.0, r.size.y - 8.0))
 	_held_fx.global_position = p + Vector2(14, -86)
+	if _held_water:
+		var show_water := GameState.hand == "pot" and GameState.pot_water
+		_held_water.visible = show_water
+		if show_water:
+			_held_water.global_position = p + Vector2(40, -78)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -465,7 +556,10 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and GameState.hand != "":
-			_hint("まな板、お鍋、棚のどれかをタップして置いてね。")
+			if GameState.hand == "pot":
+				_hint("コンロか、流しをタップして置いてね。")
+			else:
+				_hint("まな板、お鍋、棚のどれかをタップして置いてね。")
 
 
 func _make_salt_particles(burst: bool) -> CPUParticles2D:
@@ -556,20 +650,6 @@ func _tick_salt_orbit(delta: float) -> void:
 		s.scale = Vector2.ONE * (0.42 + 0.5 * twinkle)
 
 
-func _add_pot_liquid(path: String) -> void:
-	Art.boot()
-	var r := TextureRect.new()
-	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	r.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	r.material = Art.chroma
-	r.texture = load(path)
-	r.layout_mode = 1
-	r.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_overlays.add_child(r)
-
-
 func _update_held_tex() -> void:
 	if _held_fx == null:
 		return
@@ -577,6 +657,8 @@ func _update_held_tex() -> void:
 	var key := _family(hand)
 	if hand == "knife":
 		key = "knife"
+	if hand == "pot":
+		key = "pot"
 	if hand.begins_with("chopped_"):
 		key = hand
 	if hand == "" or not ART.has(key):
@@ -584,6 +666,8 @@ func _update_held_tex() -> void:
 		return
 	_held_fx.texture = load(ART[key])
 	_held_fx.modulate = Color.WHITE
+	if _held_water and (_held_water.texture == null):
+		_held_water.texture = load("res://assets/art/pot-liquid-water.png")
 
 
 func _refresh_visuals() -> void:
@@ -599,21 +683,17 @@ func _refresh_visuals() -> void:
 		btn.disabled = not on_shelf
 		btn.mouse_filter = Control.MOUSE_FILTER_STOP if on_shelf else Control.MOUSE_FILTER_IGNORE
 
+	Hotspots.draw_pot(
+		_overlays,
+		"cooking",
+		_done,
+		_pot_has_food(),
+		loc.get("moonMilk", "") == "pot",
+		loc.get("onion", "") == "pot"
+	)
+
 	if water_on:
 		Art.sprite(_overlays, "res://assets/art/water-stream.png", 8.7, 40.5, 5.2, 22.0, false, false)
-
-	if _done:
-		_add_pot_liquid("res://assets/art/pot-potage.png")
-	elif _pot_has_food():
-		_add_pot_liquid("res://assets/art/pot-soup.png")
-	elif pot_water:
-		_add_pot_liquid("res://assets/art/pot-water.png")
-
-	# Ingredient parts stack independently of add order.
-	if loc.get("moonMilk", "") == "pot":
-		_add_pot_liquid("res://assets/art/pot-milk-swirl.png")
-	if loc.get("onion", "") == "pot":
-		_add_pot_liquid("res://assets/art/pot-onion-bits.png")
 
 	if pot_fire:
 		for flame_x in [23.5, 27.2, 30.9]:
@@ -650,7 +730,7 @@ func _end_salt_sparkle() -> void:
 func _check_done() -> void:
 	if _done:
 		return
-	if pot_water and pot_fire and loc.get("potato", "") == "pot" and loc.get("onion", "") == "pot" and loc.get("moonMilk", "") == "pot" and loc.get("starSalt", "") == "pot":
+	if GameState.pot_water and pot_fire and loc.get("potato", "") == "pot" and loc.get("onion", "") == "pot" and loc.get("moonMilk", "") == "pot" and loc.get("starSalt", "") == "pot":
 		_done = true
 		_refresh_visuals()
 		GameState.say("しおん", "月あかりポタージュ、できたよ。")
