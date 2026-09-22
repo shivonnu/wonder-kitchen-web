@@ -969,23 +969,122 @@ func _play_wall_stars() -> void:
 
 
 func _play_table() -> void:
-	var world := _begin()
+	var world := _world()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var board := _box(world, hub, Vector2(168, 88), Color(0.55, 0.38, 0.22, 0.0), 5)
-	board.modulate.a = 0.0
-	var pop := create_tween()
-	pop.tween_property(board, "modulate:a", 0.92, 0.18)
-	pop.parallel().tween_property(board, "scale", Vector2(1.05, 1.05), 0.18).set_trans(Tween.TRANS_BACK)
-	await pop.finished
-	if not await _pause(world, 0.55):
+	var glow := _disc(world, hub, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.32).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.32)
+
+	var home := Vector2(718.0, 452.0)
+	var actor := Node2D.new()
+	actor.position = home
+	actor.z_index = 12
+	actor.scale = Vector2(0.18, 0.18)
+	actor.modulate.a = 0.0
+	world.add_child(actor)
+
+	var board := _spr(actor, "res://assets/art/cutting-board.png", Vector2.ZERO, 1.0)
+	board.z_index = 1
+	if board.texture:
+		var tw := float(board.texture.get_width())
+		if tw > 1.0:
+			board.scale = Vector2.ONE * (152.0 / tw)
+
+	var face := Node2D.new()
+	face.position = Vector2(0.0, -62.0)
+	face.modulate.a = 0.0
+	face.z_index = 4
+	actor.add_child(face)
+	_disc(face, Vector2(-9.0, -2.0), 5.6, Color(0.12, 0.14, 0.22, 1.0), 3)
+	_disc(face, Vector2(9.0, -2.0), 5.6, Color(0.12, 0.14, 0.22, 1.0), 3)
+	_disc(face, Vector2(-7.0, -3.5), 2.1, Color(0.95, 0.97, 1.0, 0.95), 4)
+	_disc(face, Vector2(11.0, -3.5), 2.1, Color(0.95, 0.97, 1.0, 0.95), 4)
+	_box(face, Vector2(0.0, 8.0), Vector2(11.0, 3.2), Color(0.32, 0.15, 0.07, 0.95), 3)
+
+	var leg_l := _box(actor, Vector2(-13.0, 58.0), Vector2(9.0, 22.0), Color(0.42, 0.22, 0.10, 1.0), 2)
+	var leg_r := _box(actor, Vector2(13.0, 58.0), Vector2(9.0, 22.0), Color(0.42, 0.22, 0.10, 1.0), 2)
+	leg_l.modulate.a = 0.0
+	leg_r.modulate.a = 0.0
+
+	var memo := _spr_fit(actor, "res://assets/art/icon-memo.png", Vector2(34.0, -92.0), 72.0)
+	memo.z_index = 6
+	memo.modulate.a = 0.0
+	memo.scale *= 0.2
+
+	# 茶色いまな板がキャラクターになる。3秒。
+	var become := create_tween()
+	become.set_trans(Tween.TRANS_BACK)
+	become.set_ease(Tween.EASE_OUT)
+	become.tween_property(actor, "modulate:a", 1.0, 0.28)
+	become.parallel().tween_property(actor, "scale", Vector2.ONE, 0.5)
+	become.tween_property(board, "rotation_degrees", -90.0, 0.9)
+	become.parallel().tween_property(face, "modulate:a", 1.0, 0.35).set_delay(0.35)
+	become.parallel().tween_property(leg_l, "modulate:a", 1.0, 0.28).set_delay(0.45)
+	become.parallel().tween_property(leg_r, "modulate:a", 1.0, 0.28).set_delay(0.45)
+	become.tween_property(actor, "position:y", home.y - 16.0, 0.2)
+	become.tween_property(actor, "position:y", home.y, 0.24)
+	become.tween_property(actor, "rotation_degrees", 10.0, 0.18)
+	become.tween_property(actor, "rotation_degrees", -8.0, 0.2)
+	become.tween_property(actor, "rotation_degrees", 0.0, 0.16)
+	become.tween_interval(0.62)
+	await become.finished
+	if not _ok(world):
 		return
-	_puff(world, hub, Color(0.7, 0.55, 0.35), 8, 0.35, 30.0)
-	var poof := create_tween()
-	poof.tween_property(board, "scale", Vector2(0.2, 0.2), 0.22)
-	poof.parallel().tween_property(board, "modulate:a", 0.0, 0.22)
-	await poof.finished
+
+	# 歩きながらくるくるまわる。5秒。
+	var walk_c := Vector2(718.0, 478.0)
+	var walk := create_tween()
+	walk.tween_method(func(t: float) -> void:
+		if not _ok(actor):
+			return
+		var a := -PI * 0.5 + t * TAU * 1.2
+		actor.position = walk_c + Vector2(cos(a) * 148.0, sin(a) * 52.0)
+		actor.position.y += sin(t * TAU * 8.0) * 5.0
+		actor.rotation_degrees = t * 1080.0
+		if _ok(leg_l):
+			leg_l.rotation_degrees = sin(t * TAU * 8.0) * 24.0
+		if _ok(leg_r):
+			leg_r.rotation_degrees = sin(t * TAU * 8.0 + PI) * 24.0
+	, 0.0, 1.0, 5.0)
+	await walk.finished
+	if not _ok(world):
+		return
+
+	actor.rotation_degrees = 0.0
+	if _ok(leg_l):
+		leg_l.rotation_degrees = 0.0
+	if _ok(leg_r):
+		leg_r.rotation_degrees = 0.0
+
+	# メモをアピールして消える。5秒。
+	var memo_sc := memo.scale / 0.2
+	var ay := actor.position.y
+	var show := create_tween()
+	show.set_trans(Tween.TRANS_BACK)
+	show.set_ease(Tween.EASE_OUT)
+	show.tween_property(memo, "modulate:a", 1.0, 0.28)
+	show.parallel().tween_property(memo, "scale", memo_sc, 0.4)
+	show.tween_property(actor, "position:y", ay - 14.0, 0.18)
+	show.tween_property(actor, "position:y", ay, 0.2)
+	show.tween_property(memo, "rotation_degrees", -14.0, 0.16)
+	show.tween_property(memo, "rotation_degrees", 12.0, 0.18)
+	show.tween_property(memo, "rotation_degrees", -8.0, 0.16)
+	show.tween_property(memo, "rotation_degrees", 0.0, 0.14)
+	show.tween_property(actor, "position:y", ay - 10.0, 0.16)
+	show.tween_property(actor, "position:y", ay, 0.18)
+	await show.finished
+	if not await _pause(world, 1.64):
+		return
+	var fade := create_tween()
+	fade.set_trans(Tween.TRANS_SINE)
+	fade.tween_property(actor, "modulate:a", 0.0, 1.6)
+	fade.parallel().tween_property(actor, "scale", Vector2(0.12, 0.12), 1.6)
+	fade.parallel().tween_property(glow, "modulate:a", 0.0, 1.2)
+	await fade.finished
 
 
 func _play_bench() -> void:
