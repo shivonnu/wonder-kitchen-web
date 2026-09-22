@@ -5,7 +5,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	layout_mode = 1
 	Art.backdrop(self, "res://assets/art/ending.png")
-	Art.sprite(self, "res://assets/art/shion-wave.png", 38, 28, 24, 36, true, true)
+	Art.sprite(self, "res://assets/art/shion-wave.png", 40, 46, 12, 26, true, true, 1.25, true)
 
 	var copy := VBoxContainer.new()
 	copy.layout_mode = 1

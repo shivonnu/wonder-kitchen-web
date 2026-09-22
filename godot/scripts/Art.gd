@@ -30,7 +30,7 @@ static func fill_pct(node: Control, x: float, y: float, w: float, h: float) -> v
 	node.offset_bottom = 0.0
 
 
-static func sprite(parent: Control, path: String, x: float, y: float, w: float, h: float, crop_half := false, bob := false, bob_half := 1.25) -> TextureRect:
+static func sprite(parent: Control, path: String, x: float, y: float, w: float, h: float, crop_half := false, bob := false, bob_half := 1.25, crop_right := false) -> TextureRect:
 	boot()
 	var r := TextureRect.new()
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -42,7 +42,8 @@ static func sprite(parent: Control, path: String, x: float, y: float, w: float, 
 	if crop_half and tex:
 		var atlas := AtlasTexture.new()
 		atlas.atlas = tex
-		atlas.region = Rect2(0, 0, tex.get_width() * 0.5, tex.get_height())
+		var hw := tex.get_width() * 0.5
+		atlas.region = Rect2(hw if crop_right else 0.0, 0, hw, tex.get_height())
 		r.texture = atlas
 	else:
 		r.texture = tex
