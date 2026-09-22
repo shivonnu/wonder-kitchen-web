@@ -35,6 +35,8 @@ var _backdrop_scene := ""
 var _overlay_sig := ""
 var _miss_i := 0
 var _last_miss_msec := 0
+var _held_fx: TextureRect
+var _held_water: TextureRect
 
 
 func _ready() -> void:
@@ -72,6 +74,28 @@ func _ready() -> void:
 	resized.connect(_place_kitchen_water)
 	GameState.flags_changed.connect(refresh)
 	GameState.inventory_changed.connect(refresh)
+	GameState.hand_changed.connect(refresh)
+	GameState.pot_changed.connect(refresh)
+	_held_fx = TextureRect.new()
+	_held_fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_held_fx.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_held_fx.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_held_fx.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_held_fx.material = Art.chroma
+	_held_fx.size = Vector2(140, 92)
+	_held_fx.z_index = 80
+	_held_fx.visible = false
+	add_child(_held_fx)
+	_held_water = TextureRect.new()
+	_held_water.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_held_water.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_held_water.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_held_water.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_held_water.material = Art.chroma
+	_held_water.size = Vector2(88, 18)
+	_held_water.z_index = 81
+	_held_water.visible = false
+	add_child(_held_water)
 	refresh()
 
 
@@ -137,12 +161,16 @@ func _current_overlay_sig(scene_id: String) -> String:
 		str(GameState.has_item("onion")),
 		str(GameState.has_item("moonMilk")),
 		str(GameState.can_cook()),
+		str(GameState.hand),
+		str(GameState.pot_place),
+		str(GameState.pot_water),
 	])
 
 
 func _draw_overlays(scene_id: String) -> void:
 	match scene_id:
 		"kitchen":
+			Hotspots.draw_pot(_art, "kitchen")
 			if GameState.has_flag("kitchenFaucet"):
 				Art.sprite(_art, "res://assets/art/water-stream.png", 7.4, 40.5, 5.2, 22.0, false, false)
 			var pepper := Art.sprite(_art, "res://assets/art/pepper-jar.png", 16.17, 22.64, 3.13, 9.03, false, false)
@@ -191,6 +219,10 @@ func set_kitchen_actors_visible(on: bool) -> void:
 
 
 func _click_spot(spot: Dictionary) -> void:
+	var id := str(spot.get("id", ""))
+	if id == "pot" or id == "sinkBasin" or (id == "sink" and GameState.hand == "pot"):
+		_on_kitchen_pot_spot(id)
+		return
 	var fx := str(spot.get("fx", ""))
 	if fx != "" and _gizmo != null:
 		if _gizmo.busy:
@@ -198,7 +230,59 @@ func _click_spot(spot: Dictionary) -> void:
 		await _gizmo.play(fx, spot)
 		if not is_inside_tree():
 			return
+		if id == "sink":
+			_kitchen_try_fill()
+			return
 	GameState.click_hotspot(spot)
+
+
+func _on_kitchen_pot_spot(id: String) -> void:
+	if GameState.scene != "kitchen":
+		return
+	var hand := GameState.hand
+	if hand == "pot":
+		if id == "pot":
+			GameState.set_pot_place("stove")
+			GameState.clear_hand()
+			if GameState.pot_water:
+				GameState.say("しおん", "コンロに戻したよ。水は入ったまま。")
+			else:
+				GameState.say("しおん", "まだ何も入っていない。材料がそろったら、ここで煮よう。")
+		else:
+			GameState.set_pot_place("sink")
+			GameState.clear_hand()
+			if GameState.has_flag("kitchenFaucet"):
+				GameState.fill_pot_in_sink(true)
+				GameState.say("しおん", "白い星くずが、鍋にたまっていった。")
+			else:
+				GameState.say("しおん", "流しに置いたよ。蛇口をひねると、水が貯まる。")
+		return
+	if hand != "":
+		GameState.say("しおん", "今は%sを持っているよ。" % Hotspots.HAND_NAMES.get(hand, hand))
+		return
+	if id == "pot":
+		if GameState.pot_place != "stove":
+			GameState.say("しおん", "お鍋は、流しにあるよ。")
+			return
+		GameState.force_hand("pot")
+		if GameState.pot_water:
+			GameState.say("しおん", "星くずの水が入った鍋。流しにも、コンロにも置けるよ。")
+		else:
+			GameState.say("しおん", "まだ何も入っていない。流しに置くと、水をためられるよ。")
+		return
+	if GameState.pot_place == "sink":
+		GameState.force_hand("pot")
+		if GameState.pot_water:
+			GameState.say("しおん", "水の入った鍋を持った。コンロに戻そう。")
+		else:
+			GameState.say("しおん", "お鍋を持った。蛇口をひねると、水が貯まるよ。")
+		return
+	GameState.say("しおん", "流しだよ。お鍋を置くと、水をためられる。")
+
+
+func _kitchen_try_fill() -> void:
+	if GameState.fill_pot_in_sink(GameState.has_flag("kitchenFaucet")):
+		GameState.say("流し", "白い星くずが、鍋にたまっていった。")
 
 
 func _place_kitchen_water() -> void:
@@ -244,6 +328,9 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	_last_miss_msec = now
 	Art.spark_at(_fx, get_global_mouse_position())
+	if GameState.hand == "pot":
+		GameState.say("しおん", "コンロか、流しをタップして置いてね。")
+		return
 	var lines: Array = MISS_LINES.get(GameState.scene, MISS_LINES["kitchen"])
 	GameState.say("しおん", str(lines[_miss_i % lines.size()]))
 	_miss_i += 1
@@ -255,3 +342,25 @@ func _over_hotspot() -> bool:
 		if c is Control and (c as Control).get_global_rect().has_point(pos):
 			return true
 	return false
+
+
+func _process(_delta: float) -> void:
+	if _held_fx == null:
+		return
+	var holding := GameState.scene == "kitchen" and GameState.hand == "pot"
+	_held_fx.visible = holding
+	if _held_water:
+		_held_water.visible = holding and GameState.pot_water
+	if not holding:
+		return
+	if _held_fx.texture == null:
+		_held_fx.texture = load(Hotspots.POT_ART)
+	if _held_water and _held_water.texture == null:
+		_held_water.texture = load("res://assets/art/pot-liquid-water.png")
+	var p := get_global_mouse_position()
+	var r := get_global_rect()
+	p.x = clampf(p.x, r.position.x + 8.0, r.position.x + maxf(24.0, r.size.x - 8.0))
+	p.y = clampf(p.y, r.position.y + 8.0, r.position.y + maxf(24.0, r.size.y - 8.0))
+	_held_fx.global_position = p + Vector2(10, -78)
+	if _held_water:
+		_held_water.global_position = p + Vector2(36, -70)
