@@ -188,9 +188,7 @@ const SCENES := {
 				"label": "流し",
 				"x": 0, "y": 40, "w": 18, "h": 32,
 				"fx": "sink",
-				"actions": [
-					{"type": "say", "speaker": "流し", "text": "水のかわりに、うすい星くずがさらさら流れている。つめたい。"},
-				],
+				"actions": [],
 			},
 			{
 				"id": "shelf",
