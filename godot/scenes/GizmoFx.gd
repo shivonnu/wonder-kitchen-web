@@ -1088,37 +1088,111 @@ func _play_table() -> void:
 
 
 func _play_bench() -> void:
-	var world := _begin()
+	var world := _world()
 	if not _ok(world):
 		return
 	var hub := _hub()
-	var luna := _spr_fit(world, "res://assets/art/luna-idle.png", hub + Vector2(0, 10), 140.0)
-	if luna.texture:
-		var atlas := AtlasTexture.new()
-		atlas.atlas = luna.texture
-		atlas.region = Rect2(0, 0, luna.texture.get_width() * 0.5, luna.texture.get_height())
-		luna.texture = atlas
-		var th := float(atlas.get_height())
-		if th > 1.0:
-			luna.scale = Vector2.ONE * (140.0 / th)
-	luna.modulate = Color(1, 1, 1, 0.0)
-	var in_tw := create_tween()
-	in_tw.tween_property(luna, "modulate:a", 0.85, 0.2)
-	await in_tw.finished
+	var seat := Vector2(970.0, 358.0)
+	var glow := _disc(world, hub, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.32).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.32)
+
+	var hold := Node2D.new()
+	hold.position = seat
+	hold.z_index = 12
+	hold.scale = Vector2(0.55, 0.55)
+	hold.modulate = Color(0.90, 0.94, 1.0, 0.0)
+	world.add_child(hold)
+	var luna := _spr(hold, "res://assets/art/luna-idle.png", Vector2.ZERO, 1.0)
+	luna.z_index = 2
+	_bench_luna_pose(luna, false, 150.0)
+
+	# 透明度30%くらいのルナがあらわれる。
+	var appear := create_tween()
+	appear.set_trans(Tween.TRANS_SINE)
+	appear.tween_property(hold, "modulate:a", 0.30, 0.4)
+	appear.parallel().tween_property(hold, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await appear.finished
 	if not _ok(world):
 		return
-	var kick := create_tween()
-	kick.tween_property(luna, "rotation_degrees", 12.0, 0.16)
-	kick.tween_property(luna, "rotation_degrees", -10.0, 0.18)
-	kick.tween_property(luna, "rotation_degrees", 8.0, 0.16)
-	kick.tween_property(luna, "rotation_degrees", 0.0, 0.14)
-	await kick.finished
-	if not await _pause(world, 0.2):
+
+	# 石のベンチの上を跳ねる。3秒。
+	var bounce := create_tween()
+	bounce.set_trans(Tween.TRANS_SINE)
+	for i in 5:
+		var peak := seat.y - (26.0 + float(i % 2) * 10.0)
+		var xoff := 12.0 if i % 2 == 0 else -10.0
+		var tilt := -9.0 if i % 2 == 0 else 9.0
+		bounce.tween_property(hold, "position:y", peak, 0.26).set_ease(Tween.EASE_OUT)
+		bounce.parallel().tween_property(hold, "position:x", seat.x + xoff, 0.26)
+		bounce.parallel().tween_property(hold, "rotation_degrees", tilt, 0.26)
+		bounce.tween_property(hold, "position:y", seat.y, 0.34).set_ease(Tween.EASE_IN)
+		bounce.parallel().tween_property(hold, "rotation_degrees", 0.0, 0.34)
+	await bounce.finished
+	if not _ok(world):
 		return
-	var out_tw := create_tween()
-	out_tw.tween_property(luna, "modulate:a", 0.0, 0.28)
-	out_tw.parallel().tween_property(luna, "position:y", hub.y + 18.0, 0.28)
-	await out_tw.finished
+	hold.position = seat
+	hold.rotation_degrees = 0.0
+
+	# くつろぐ。5秒。
+	var rest := create_tween()
+	rest.tween_method(func(t: float) -> void:
+		if not _ok(hold):
+			return
+		var lean := lerpf(0.0, -16.0, minf(t * 1.8, 1.0))
+		hold.rotation_degrees = lean + sin(t * TAU * 1.15) * 3.2
+		var stretch := 1.0
+		if t < 0.22:
+			stretch = lerpf(1.0, 1.08, t / 0.22)
+		else:
+			stretch = lerpf(1.08, 1.0, minf((t - 0.22) / 0.18, 1.0))
+		hold.scale = Vector2(stretch, stretch)
+		hold.position.y = seat.y + 4.0 * minf(t * 1.6, 1.0)
+	, 0.0, 1.0, 5.0)
+	await rest.finished
+	if not _ok(world):
+		return
+
+	# 寝る。7秒。
+	_bench_luna_pose(luna, true, 150.0)
+	var sleep := create_tween()
+	sleep.tween_method(func(t: float) -> void:
+		if not _ok(hold):
+			return
+		var breath := sin(t * TAU * 2.4) * 0.05
+		hold.scale = Vector2(1.0 + breath * 0.6, 1.0 + breath)
+		hold.rotation_degrees = lerpf(-16.0, -22.0, minf(t * 2.0, 1.0)) + breath * 4.0
+		hold.position.y = seat.y + 8.0 + breath * 3.0
+	, 0.0, 1.0, 7.0)
+	await sleep.finished
+	if not _ok(world):
+		return
+
+	# ゆっくり消える。3秒。
+	var fade := create_tween()
+	fade.set_trans(Tween.TRANS_SINE)
+	fade.tween_property(hold, "modulate:a", 0.0, 3.0)
+	fade.parallel().tween_property(hold, "position:y", seat.y - 18.0, 3.0)
+	fade.parallel().tween_property(glow, "modulate:a", 0.0, 2.2)
+	await fade.finished
+
+
+func _bench_luna_pose(s: Sprite2D, ears_down: bool, target_h: float) -> void:
+	var src: Texture2D = s.texture
+	if src is AtlasTexture:
+		src = (src as AtlasTexture).atlas
+	if src == null:
+		return
+	var atlas := AtlasTexture.new()
+	atlas.atlas = src
+	var hw := src.get_width() * 0.5
+	atlas.region = Rect2(hw if ears_down else 0.0, 0.0, hw, src.get_height())
+	s.texture = atlas
+	var th := float(atlas.get_height())
+	if th > 1.0:
+		s.scale = Vector2.ONE * (target_h / th)
 
 
 func _play_pot() -> void:
