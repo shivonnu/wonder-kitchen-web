@@ -23,7 +23,7 @@ const HAND_NAMES := {
 
 const POT_ART := "res://assets/art/cook-pot.png"
 const POT_STOVE := {
-	"kitchen": [19.5, 35.8, 15.8, 14.8],
+	"kitchen": [19.6, 36.8, 15.3, 14.0],
 	"cooking": [22.7, 33.1, 16.3, 16.9],
 }
 const POT_SINK := {
