@@ -14,6 +14,8 @@ const CLOCK_HUB := Vector2(331, 110)
 const CLOCK_RAD := 78.0
 const WELL := Vector2(627, 446)
 const CAVE_MOUTH := Vector2(1126, 280)
+const FLOOR_CRYSTAL := Vector2(1195, 582)
+const WINDOW_SKY := Vector2(848, 132)
 const TEX := 64.0
 
 
@@ -727,21 +729,127 @@ func _shelf_seq() -> void:
 
 
 func _play_floor_crystal() -> void:
-	var world := _begin()
+	var world := _world()
 	if not _ok(world):
 		return
-	var hub := _hub()
-	_ripple(world, hub, Color(0.85, 0.92, 1.0, 0.7), 32.0)
-	_puff(world, hub, Art.SALT, 14, 0.5, 40.0)
-	if not await _pause(world, 0.45):
+	var crystal := FLOOR_CRYSTAL
+	var sky := WINDOW_SKY
+
+	var glow := _disc(world, crystal, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.32).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.32)
+	_puff(world, crystal, Art.SALT, 16, 0.55, 36.0)
+
+	var hold := Node2D.new()
+	hold.position = crystal
+	hold.z_index = 12
+	hold.scale = Vector2(0.08, 0.08)
+	hold.modulate = Color(0.82, 0.93, 1.0, 0.0)
+	world.add_child(hold)
+	_disc(hold, Vector2.ZERO, 34.0, Color(0.85, 0.93, 1.0, 0.35), 0)
+	var bunny := _spr(hold, "res://assets/art/luna-idle.png", Vector2.ZERO, 1.0)
+	bunny.z_index = 2
+	if bunny.texture:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = bunny.texture
+		atlas.region = Rect2(0.0, 0.0, bunny.texture.get_width() * 0.5, bunny.texture.get_height())
+		bunny.texture = atlas
+		var th := float(atlas.get_height())
+		if th > 1.0:
+			bunny.scale = Vector2.ONE * (168.0 / th)
+
+	# 結晶から塩のウサギが出る。2秒。
+	var emerge := create_tween()
+	emerge.set_trans(Tween.TRANS_SINE)
+	emerge.tween_property(hold, "modulate:a", 1.0, 0.4)
+	emerge.parallel().tween_property(hold, "scale", Vector2.ONE, 0.85).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	emerge.parallel().tween_property(hold, "position", crystal + Vector2(-16, -54), 0.85)
+	emerge.tween_property(hold, "position:y", crystal.y - 92.0, 0.28).set_ease(Tween.EASE_OUT)
+	emerge.tween_property(hold, "position:y", crystal.y - 50.0, 0.32).set_ease(Tween.EASE_IN)
+	emerge.tween_property(hold, "position:y", crystal.y - 78.0, 0.25).set_ease(Tween.EASE_OUT)
+	emerge.tween_property(hold, "position:y", crystal.y - 52.0, 0.3).set_ease(Tween.EASE_IN)
+	await emerge.finished
+	if not _ok(world):
 		return
-	var star := _disc(world, Vector2(920, 70), 24.0, Art.GOLD, 6)
-	star.scale = Vector2(0.2, 0.2)
-	var tw := create_tween()
-	tw.tween_property(star, "scale", Vector2(1.8, 1.8), 0.28).set_trans(Tween.TRANS_BACK)
-	tw.tween_property(star, "scale", Vector2(0.9, 0.9), 0.2)
-	tw.tween_property(star, "modulate:a", 0.0, 0.4)
-	await tw.finished
+
+	# 窓へ飛び出す。3秒。
+	_puff(world, hold.position, Art.SALT, 10, 0.45, 40.0, Vector2(0, 20), Vector2(-0.4, -1), 30.0)
+	var start := hold.position
+	var leap := create_tween()
+	leap.set_trans(Tween.TRANS_SINE)
+	leap.set_ease(Tween.EASE_IN_OUT)
+	leap.tween_method(func(t: float) -> void:
+		if not _ok(hold):
+			return
+		hold.position = start.lerp(sky, t) + Vector2(0.0, -sin(t * PI) * 210.0)
+		hold.scale = Vector2.ONE.lerp(Vector2(0.38, 0.38), t)
+		hold.rotation_degrees = lerpf(-6.0, 12.0, t)
+	, 0.0, 1.0, 3.0)
+	leap.parallel().tween_property(glow, "modulate:a", 0.12, 1.4)
+	if not await _pause(world, 1.2):
+		return
+	_puff(world, hold.position, Art.GOLD, 8, 0.4, 28.0, Vector2(0, 10), Vector2(-0.2, -1), 24.0)
+	await leap.finished
+	if not _ok(world):
+		return
+
+	# 夜空で星座になる。2秒。
+	_puff(world, sky, Art.SALT, 14, 0.5, 32.0)
+	var pts: Array[Vector2] = [
+		sky + Vector2(-28, -70),
+		sky + Vector2(24, -66),
+		sky + Vector2(-12, -34),
+		sky + Vector2(18, -30),
+		sky + Vector2(4, -4),
+		sky + Vector2(-16, 28),
+		sky + Vector2(36, 16),
+		sky + Vector2(-30, 46),
+		sky + Vector2(16, 50),
+	]
+	var links: Array = [
+		[0, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [4, 6], [5, 7], [5, 8], [6, 8],
+	]
+	var stars: Array[Node2D] = []
+	var lines: Array[Node2D] = []
+	for i in pts.size():
+		var col := Art.GOLD if i % 2 == 0 else Art.SALT
+		var st := _disc(world, pts[i], 9.0, col, 14)
+		st.scale = Vector2(0.12, 0.12)
+		st.modulate.a = 0.0
+		stars.append(st)
+	for pair in links:
+		var a: Vector2 = pts[int(pair[0])]
+		var b: Vector2 = pts[int(pair[1])]
+		var ln := _box(world, (a + b) * 0.5, Vector2(a.distance_to(b), 2.4), Color(0.91, 0.77, 0.42, 0.0), 13)
+		ln.rotation = (b - a).angle()
+		ln.modulate.a = 0.0
+		lines.append(ln)
+	var form := create_tween()
+	form.set_trans(Tween.TRANS_BACK)
+	form.set_ease(Tween.EASE_OUT)
+	form.tween_property(hold, "modulate:a", 0.0, 0.45)
+	form.parallel().tween_property(hold, "scale", Vector2(0.12, 0.12), 0.45)
+	for i in stars.size():
+		form.parallel().tween_property(stars[i], "modulate:a", 1.0, 0.28).set_delay(0.12 + float(i) * 0.1)
+		form.parallel().tween_property(stars[i], "scale", Vector2.ONE, 0.32).set_delay(0.12 + float(i) * 0.1)
+	for ln in lines:
+		form.parallel().tween_property(ln, "modulate:a", 0.72, 0.55).set_delay(0.55)
+	if not await _pause(world, 2.0):
+		return
+
+	# うっすら消える。3秒。
+	var fade := create_tween()
+	fade.set_trans(Tween.TRANS_SINE)
+	for st in stars:
+		if _ok(st):
+			fade.parallel().tween_property(st, "modulate:a", 0.0, 3.0)
+	for ln in lines:
+		if _ok(ln):
+			fade.parallel().tween_property(ln, "modulate:a", 0.0, 3.0)
+	fade.parallel().tween_property(glow, "modulate:a", 0.0, 1.6)
+	await fade.finished
 
 
 func _play_wall_stars() -> void:
