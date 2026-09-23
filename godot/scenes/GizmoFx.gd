@@ -969,6 +969,16 @@ func _play_wall_stars() -> void:
 
 
 func _play_table() -> void:
+	var host := get_parent() as AdventureScreen
+	if host:
+		host.set_kitchen_memo_visible(false)
+	await _table_seq()
+	_clear()
+	if host and is_instance_valid(host):
+		host.set_kitchen_memo_visible(true)
+
+
+func _table_seq() -> void:
 	var world := _world()
 	if not _ok(world):
 		return
@@ -1217,44 +1227,128 @@ func _play_pot() -> void:
 
 
 func _play_empty_salt() -> void:
-	var world := _begin()
-	if not _ok(world):
-		return
-	var hub := _hub()
-	var jar := _spr_fit(world, "res://assets/art/icon-salt.png", hub, 72.0)
-	jar.modulate.a = 0.0
-	var inn := create_tween()
-	inn.tween_property(jar, "modulate:a", 1.0, 0.12)
-	inn.tween_property(jar, "rotation_degrees", 28.0, 0.22).set_trans(Tween.TRANS_BACK)
-	await inn.finished
-	if not await _pause(world, 0.35):
-		return
-	var back := create_tween()
-	back.tween_property(jar, "rotation_degrees", 0.0, 0.2)
-	await back.finished
-	if not _ok(world):
-		return
-	_puff(world, hub + Vector2(0, 16), Art.SALT, 12, 0.4, 36.0)
-	await _pause(world, 0.3)
+	var host := get_parent() as AdventureScreen
+	if host:
+		host.set_kitchen_salt_visible(false)
+	await _empty_salt_seq()
+	_clear()
+	if host and is_instance_valid(host):
+		host.set_kitchen_salt_visible(true)
 
 
-func _play_memo() -> void:
-	var world := _begin()
+func _empty_salt_seq() -> void:
+	var world := _world()
 	if not _ok(world):
 		return
-	var hub := _hub()
-	var paper := _spr_fit(world, "res://assets/art/icon-memo.png", hub, 78.0)
+	var home := Vector2(1143.5, 343.5)
+	var glow := _disc(world, home, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.32).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.32)
+
+	var jar := Node2D.new()
+	jar.position = home
+	jar.z_index = 12
+	world.add_child(jar)
+	var innards := _spr(jar, "res://assets/art/salt-jar-contents.png", Vector2.ZERO, 1.0)
+	innards.z_index = 1
+	var glass := _spr(jar, "res://assets/art/salt-jar-glass.png", Vector2.ZERO, 1.0)
+	glass.z_index = 2
+
+	# 逆さにする。
 	var flip := create_tween()
-	var sx := paper.scale.x
-	flip.tween_property(paper, "scale:x", 0.05, 0.16)
-	flip.tween_property(paper, "scale:x", sx, 0.16)
-	flip.tween_property(paper, "scale:x", 0.05, 0.14)
-	flip.tween_property(paper, "scale:x", sx, 0.16)
+	flip.set_trans(Tween.TRANS_SINE)
+	flip.set_ease(Tween.EASE_IN_OUT)
+	flip.tween_property(jar, "rotation_degrees", 180.0, 0.7)
+	flip.parallel().tween_property(jar, "position:y", home.y - 18.0, 0.7)
+	flip.parallel().tween_property(innards, "position", Vector2(0.0, -14.0), 0.7)
 	await flip.finished
 	if not _ok(world):
 		return
-	_puff(world, hub, Art.GOLD, 8, 0.35, 24.0)
-	await _pause(world, 0.25)
+
+	# 振りながら中身が上下左右に連動する。10秒。
+	var shake := create_tween()
+	shake.tween_method(func(t: float) -> void:
+		if not _ok(jar):
+			return
+		var ox := sin(t * TAU * 3.7) * 12.0 + sin(t * TAU * 7.1) * 5.5
+		var oy := sin(t * TAU * 4.9) * 10.0 + cos(t * TAU * 2.8) * 4.5
+		jar.position = Vector2(home.x + ox, home.y - 18.0 + oy)
+		jar.rotation_degrees = 180.0 + sin(t * TAU * 6.2) * 9.0
+		if _ok(innards):
+			innards.position = Vector2(ox * 0.7, -14.0 + oy * 0.7)
+	, 0.0, 1.0, 10.0)
+	await shake.finished
+	if not _ok(world):
+		return
+
+	# 元に戻る。4秒。
+	var back := create_tween()
+	back.set_trans(Tween.TRANS_SINE)
+	back.set_ease(Tween.EASE_IN_OUT)
+	back.tween_property(jar, "rotation_degrees", 360.0, 4.0)
+	back.parallel().tween_property(jar, "position", home, 4.0)
+	back.parallel().tween_property(innards, "position", Vector2.ZERO, 4.0)
+	back.parallel().tween_property(glow, "modulate:a", 0.0, 2.4)
+	await back.finished
+	if _ok(jar):
+		jar.rotation_degrees = 0.0
+
+
+func _play_memo() -> void:
+	var host := get_parent() as AdventureScreen
+	if host:
+		host.set_kitchen_memo_visible(false)
+	await _memo_seq()
+	_clear()
+	if host and is_instance_valid(host):
+		host.set_kitchen_memo_visible(true)
+
+
+func _memo_seq() -> void:
+	var world := _world()
+	if not _ok(world):
+		return
+	var home := Vector2(665.6, 453.6)
+	var glow := _disc(world, home, CLOCK_RAD, Color(0.91, 0.77, 0.42, 0.0), 3)
+	glow.scale = Vector2(0.72, 0.72)
+	var grow := create_tween()
+	grow.tween_property(glow, "scale", Vector2(1.0, 1.0), 0.28).set_trans(Tween.TRANS_SINE)
+	grow.parallel().tween_property(glow, "modulate:a", 0.5, 0.28)
+
+	var paper := _spr_fit(world, "res://assets/art/icon-memo.png", home, 92.0)
+	paper.z_index = 12
+
+	# ふわっと上がって左右に揺れる。2秒。
+	var lift := create_tween()
+	lift.tween_method(func(t: float) -> void:
+		if not _ok(paper):
+			return
+		var u := sin(t * PI * 0.5)
+		paper.position = Vector2(
+			home.x + sin(t * TAU * 2.0) * 16.0,
+			home.y - u * 42.0
+		)
+		paper.rotation_degrees = sin(t * TAU * 2.0) * 10.0
+	, 0.0, 1.0, 2.0)
+	await lift.finished
+	if not _ok(world):
+		return
+
+	# 下の位置に下がって戻る。2秒。
+	var down := create_tween()
+	down.set_trans(Tween.TRANS_SINE)
+	down.set_ease(Tween.EASE_IN_OUT)
+	down.tween_method(func(t: float) -> void:
+		if not _ok(paper):
+			return
+		var start := Vector2(home.x + sin(TAU * 2.0) * 16.0, home.y - 42.0)
+		paper.position = start.lerp(home, t)
+		paper.rotation_degrees = lerpf(sin(TAU * 2.0) * 10.0, 0.0, t)
+	, 0.0, 1.0, 2.0)
+	down.parallel().tween_property(glow, "modulate:a", 0.0, 1.6)
+	await down.finished
 
 
 # --- star road ---------------------------------------------------------------

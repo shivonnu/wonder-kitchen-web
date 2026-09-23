@@ -145,7 +145,7 @@ const SCENES := {
 			{
 				"id": "saltJar",
 				"label": "星しおの壺",
-				"x": 80, "y": 32, "w": 12, "h": 20,
+				"x": 85.86, "y": 40.0, "w": 6.95, "h": 15.42,
 				"hideWhen": ["saltTaken"],
 				"actions": [
 					{
@@ -160,7 +160,7 @@ const SCENES := {
 			{
 				"id": "emptySalt",
 				"label": "空の壺",
-				"x": 80, "y": 32, "w": 12, "h": 20,
+				"x": 85.86, "y": 40.0, "w": 6.95, "h": 15.42,
 				"showWhen": ["saltTaken"],
 				"fx": "emptySalt",
 				"actions": [
