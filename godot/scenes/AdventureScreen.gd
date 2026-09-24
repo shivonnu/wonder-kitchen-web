@@ -175,12 +175,15 @@ func _draw_overlays(scene_id: String) -> void:
 				Art.sprite(_art, "res://assets/art/water-stream.png", 7.4, 40.5, 5.2, 22.0, false, false)
 			var pepper := Art.sprite(_art, "res://assets/art/pepper-jar.png", 16.17, 22.64, 3.13, 9.03, false, false)
 			pepper.name = "pepperJar"
+			var salt := Art.sprite(_art, "res://assets/art/salt-jar.png", 85.86, 40.0, 6.95, 15.42, false, false)
+			salt.name = "kitchenSaltJar"
 			var shion := Art.sprite(_art, "res://assets/art/shion-idle.png", 32, 54, 8, 18, true, true)
 			shion.name = "kitchenShion"
 			if not GameState.has_flag("lunaLeft"):
 				Art.sprite(_art, "res://assets/art/luna-idle.png", 46, 52, 10, 18, true, true)
 			else:
-				Art.sprite(_art, "res://assets/art/icon-memo.png", 48, 56, 8, 14, false, false)
+				var memo := Art.sprite(_art, "res://assets/art/icon-memo.png", 48, 56, 8, 14, false, false)
+				memo.name = "kitchenMemo"
 			if GameState.can_cook():
 				var glow := Label.new()
 				glow.text = "つくれる！"
@@ -216,6 +219,18 @@ func set_kitchen_actors_visible(on: bool) -> void:
 		var c := _art.get_node_or_null(n)
 		if c:
 			c.visible = on
+
+
+func set_kitchen_salt_visible(on: bool) -> void:
+	var c := _art.get_node_or_null("kitchenSaltJar")
+	if c:
+		c.visible = on
+
+
+func set_kitchen_memo_visible(on: bool) -> void:
+	var c := _art.get_node_or_null("kitchenMemo")
+	if c:
+		c.visible = on
 
 
 func _click_spot(spot: Dictionary) -> void:

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bq1d76gmtsw4d"
-path="res://.godot/imported/kitchen.png-fa4234acc0c167f33793e6cdd69e34fe.ctex"
+uid="uid://cbkawha68kx77"
+path="res://.godot/imported/salt-jar-contents.png-380baf93f88dfa953adc2b073c5a9641.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/kitchen.png"
-dest_files=["res://.godot/imported/kitchen.png-fa4234acc0c167f33793e6cdd69e34fe.ctex"]
+source_file="res://assets/art/salt-jar-contents.png"
+dest_files=["res://.godot/imported/salt-jar-contents.png-380baf93f88dfa953adc2b073c5a9641.ctex"]
 
 [params]
 
